@@ -1094,6 +1094,30 @@ function buildReview() {
   `).join('');
 }
 
+// ─── CONFIG ─────────────────────────────────────────────────
+const BOT_TOKEN      = '7526763919:AAFPx_r-REPLACE_WITH_YOUR_NEW_TOKEN';
+const MASTER_CHAT_ID = 'REPLACE_WITH_YOUR_CHAT_ID';
+// ────────────────────────────────────────────────────────────
+
+// Compress image to max ~800px and quality 0.7
+function compressImage(dataUrl, maxSize = 800, quality = 0.7) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > maxSize || h > maxSize) {
+        if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+        else        { w = Math.round(w * maxSize / h); h = maxSize; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  });
+}
+
 // ─── SUBMIT ─────────────────────────────────────────────────
 async function submitForm() {
   const btn = document.getElementById('submitBtn');
@@ -1102,30 +1126,63 @@ async function submitForm() {
 
   const tgUser = tg?.initDataUnsafe?.user || {};
   const userData = {
-    fullName:    document.getElementById('fullName').value,
-    dob:         document.getElementById('dob').value,
-    tob:         document.getElementById('tob').value || (selectedTOD ? todLabels[selectedTOD] : 'មិនដឹង (Unknown)'),
-    khmerYear:   document.getElementById('khmerYear').value,
-    phone:       document.getElementById('phone').value,
-    gender:      selectedGender,
-    tgUsername:  tgUser.username || 'N/A',
-    tgName:      `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim(),
-    timestamp:   new Date().toLocaleString('en-GB'),
+    fullName:   document.getElementById('fullName').value,
+    dob:        document.getElementById('dob').value,
+    tob:        document.getElementById('tob').value || (selectedTOD ? todLabels[selectedTOD] : 'មិនដឹង (Unknown)'),
+    khmerYear:  document.getElementById('khmerYear').value,
+    phone:      document.getElementById('phone').value,
+    gender:     selectedGender,
+    tgUsername: tgUser.username || 'N/A',
+    tgName:     `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim(),
+    timestamp:  new Date().toLocaleString('en-GB'),
   };
 
   try {
-    const res = await fetch('/api/submit', {
+    // 1. Send info message
+    const msgText =
+      `🖐 *Palm Reading Request*\n\n` +
+      `👤 *ឈ្មោះ:* ${userData.fullName}\n` +
+      `📅 *DOB:* ${userData.dob}\n` +
+      `🕐 *Time:* ${userData.tob}\n` +
+      `🐉 *ឆ្នាំ:* ${userData.khmerYear}\n` +
+      `📱 *Phone:* ${userData.phone}\n` +
+      `⚧ *Gender:* ${userData.gender}\n` +
+      `👤 *TG:* @${userData.tgUsername} (${userData.tgName})\n` +
+      `🕐 *Submitted:* ${userData.timestamp}`;
+
+    const msgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userData, images: palmImages }),
+      body: JSON.stringify({ chat_id: MASTER_CHAT_ID, text: msgText, parse_mode: 'Markdown' }),
     });
+    const msgData = await msgRes.json();
+    if (!msgData.ok) throw new Error('Message failed: ' + msgData.description);
 
-    const result = await res.json();
-    if (!result.ok) throw new Error(result.error || 'Submission failed');
+    // 2. Send each palm photo (compressed)
+    const slotLabels = ['Left Palm', 'Right Palm', 'Left Side', 'Right Side'];
+    for (let i = 0; i < palmImages.length; i++) {
+      if (!palmImages[i]) continue;
+
+      const compressed = await compressImage(palmImages[i], 800, 0.72);
+      const base64 = compressed.split(',')[1];
+      const byteArr = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+      const blob = new Blob([byteArr], { type: 'image/jpeg' });
+
+      const form = new FormData();
+      form.append('chat_id', MASTER_CHAT_ID);
+      form.append('photo', blob, `palm_${i}.jpg`);
+      form.append('caption', `🖐 ${slotLabels[i]} — ${userData.fullName}`);
+
+      const photoRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+        method: 'POST',
+        body: form,
+      });
+      const photoData = await photoRes.json();
+      if (!photoData.ok) console.warn(`Photo ${i+1} issue:`, photoData.description);
+    }
 
     showLoading(false);
     showSuccessScreen(userData);
-
     if (tg) {
       tg.HapticFeedback?.notificationOccurred('success');
       tg.sendData(JSON.stringify({ submitted: true, name: userData.fullName }));
@@ -1134,7 +1191,7 @@ async function submitForm() {
   } catch (err) {
     showLoading(false);
     btn.disabled = false;
-    showToast('❌ Error: ' + err.message, 'error');
+    showToast('❌ ' + err.message, 'error');
     console.error(err);
   }
 }

@@ -849,9 +849,8 @@
 
 <script>
 // ─── CONFIG ────────────────────────────────────────────────
-// ⚙️  Set your Telegram Bot Token and Master Chat ID here
-const BOT_TOKEN  = 'YOUR_BOT_TOKEN';       // e.g. '123456789:ABCdef...'
-const MASTER_CHAT_ID = 'YOUR_CHAT_ID';     // e.g. '-1001234567890'
+// Bot token & chat ID are stored in Vercel Environment Variables
+// No secrets in frontend code!
 // ───────────────────────────────────────────────────────────
 
 // Init Telegram WebApp
@@ -1101,42 +1100,32 @@ async function submitForm() {
   btn.disabled = true;
   showLoading(true);
 
+  const tgUser = tg?.initDataUnsafe?.user || {};
   const userData = {
-    fullName:  document.getElementById('fullName').value,
-    dob:       document.getElementById('dob').value,
-    tob:       document.getElementById('tob').value || (selectedTOD ? todLabels[selectedTOD] : 'មិនដឹង (Unknown)'),
-    khmerYear: document.getElementById('khmerYear').value,
-    phone:     document.getElementById('phone').value,
-    gender:    selectedGender,
-    tgUser:    tg?.initDataUnsafe?.user || {},
-    timestamp: new Date().toISOString(),
+    fullName:    document.getElementById('fullName').value,
+    dob:         document.getElementById('dob').value,
+    tob:         document.getElementById('tob').value || (selectedTOD ? todLabels[selectedTOD] : 'មិនដឹង (Unknown)'),
+    khmerYear:   document.getElementById('khmerYear').value,
+    phone:       document.getElementById('phone').value,
+    gender:      selectedGender,
+    tgUsername:  tgUser.username || 'N/A',
+    tgName:      `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim(),
+    timestamp:   new Date().toLocaleString('en-GB'),
   };
 
   try {
-    // Build message text
-    const msgText = `🖐 *Palm Reading Request*\n\n` +
-      `👤 *ឈ្មោះ:* ${userData.fullName}\n` +
-      `📅 *DOB:* ${userData.dob}\n` +
-      `🕐 *Time:* ${userData.tob}\n` +
-      `🐉 *ឆ្នាំ:* ${userData.khmerYear}\n` +
-      `📱 *Phone:* ${userData.phone}\n` +
-      `⚧ *Gender:* ${userData.gender}\n` +
-      `👤 *TG User:* @${userData.tgUser.username || 'N/A'} (${userData.tgUser.first_name || ''} ${userData.tgUser.last_name || ''})\n` +
-      `🕐 *Submitted:* ${new Date().toLocaleString('km-KH')}`;
+    const res = await fetch('/api/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userData, images: palmImages }),
+    });
 
-    // Send text message first
-    await sendTelegramMessage(msgText);
-
-    // Send palm images as media group
-    const validImages = palmImages.map((img, i) => ({ img, label: slotMeta[i].en })).filter(x => x.img);
-    for (const { img, label } of validImages) {
-      await sendTelegramPhoto(img, label);
-    }
+    const result = await res.json();
+    if (!result.ok) throw new Error(result.error || 'Submission failed');
 
     showLoading(false);
     showSuccessScreen(userData);
 
-    // Notify via Telegram.WebApp
     if (tg) {
       tg.HapticFeedback?.notificationOccurred('success');
       tg.sendData(JSON.stringify({ submitted: true, name: userData.fullName }));
@@ -1148,40 +1137,6 @@ async function submitForm() {
     showToast('❌ Error: ' + err.message, 'error');
     console.error(err);
   }
-}
-
-async function sendTelegramMessage(text) {
-  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: MASTER_CHAT_ID,
-      text,
-      parse_mode: 'Markdown',
-    })
-  });
-  const data = await res.json();
-  if (!data.ok) throw new Error(data.description || 'Telegram error');
-  return data;
-}
-
-async function sendTelegramPhoto(dataUrl, caption) {
-  // Convert base64 to Blob
-  const base64 = dataUrl.split(',')[1];
-  const byteArr = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-  const blob = new Blob([byteArr], { type: 'image/jpeg' });
-
-  const form = new FormData();
-  form.append('chat_id', MASTER_CHAT_ID);
-  form.append('photo', blob, 'palm.jpg');
-  form.append('caption', `🖐 ${caption}`);
-
-  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`;
-  const res = await fetch(url, { method: 'POST', body: form });
-  const data = await res.json();
-  if (!data.ok) throw new Error(data.description || 'Photo send error');
-  return data;
 }
 
 function showSuccessScreen(userData) {

@@ -1,28 +1,26 @@
-export const config = { runtime: 'edge' };
-
-const BOT_TOKEN     = process.env.BOT_TOKEN;
-const MASTER_CHAT_ID = process.env.MASTER_CHAT_ID;
-
-export default async function handler(req) {
-  // Allow CORS
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json',
-  };
+export default async function handler(req, res) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers });
+    return res.status(204).end();
   }
 
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const BOT_TOKEN      = process.env.BOT_TOKEN;
+  const MASTER_CHAT_ID = process.env.MASTER_CHAT_ID;
+
+  if (!BOT_TOKEN || !MASTER_CHAT_ID) {
+    return res.status(500).json({ ok: false, error: 'Missing environment variables' });
   }
 
   try {
-    const body = await req.json();
-    const { userData, images } = body;
+    const { userData, images } = req.body;
 
     // 1. Send text message
     const msgText =
@@ -33,7 +31,7 @@ export default async function handler(req) {
       `🐉 *ឆ្នាំ:* ${userData.khmerYear}\n` +
       `📱 *Phone:* ${userData.phone}\n` +
       `⚧ *Gender:* ${userData.gender}\n` +
-      `👤 *TG User:* @${userData.tgUsername || 'N/A'} (${userData.tgName || ''})\n` +
+      `👤 *TG:* @${userData.tgUsername || 'N/A'} (${userData.tgName || ''})\n` +
       `🕐 *Submitted:* ${userData.timestamp}`;
 
     const msgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -47,40 +45,56 @@ export default async function handler(req) {
     });
 
     const msgData = await msgRes.json();
-    if (!msgData.ok) throw new Error('Message failed: ' + msgData.description);
+    if (!msgData.ok) {
+      return res.status(500).json({ ok: false, error: 'Message failed: ' + msgData.description });
+    }
 
-    // 2. Send each palm image
+    // 2. Send palm images one by one
     const slotLabels = ['Left Palm', 'Right Palm', 'Left Side', 'Right Side'];
 
     for (let i = 0; i < images.length; i++) {
       const imgData = images[i];
       if (!imgData) continue;
 
-      // Convert base64 to binary
-      const base64 = imgData.split(',')[1];
-      const binaryStr = atob(base64);
-      const bytes = new Uint8Array(binaryStr.length);
-      for (let j = 0; j < binaryStr.length; j++) {
-        bytes[j] = binaryStr.charCodeAt(j);
-      }
+      const base64 = imgData.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64, 'base64');
+      const boundary = '----FormBoundary' + Math.random().toString(36).slice(2);
+      const caption  = `🖐 ${slotLabels[i]} — ${userData.fullName}`;
 
-      const form = new FormData();
-      form.append('chat_id', MASTER_CHAT_ID);
-      form.append('photo', new Blob([bytes], { type: 'image/jpeg' }), `palm_${i}.jpg`);
-      form.append('caption', `🖐 ${slotLabels[i]} — ${userData.fullName}`);
+      let bodyStr = '';
+      bodyStr += `--${boundary}\r\n`;
+      bodyStr += `Content-Disposition: form-data; name="chat_id"\r\n\r\n`;
+      bodyStr += `${MASTER_CHAT_ID}\r\n`;
+      bodyStr += `--${boundary}\r\n`;
+      bodyStr += `Content-Disposition: form-data; name="caption"\r\n\r\n`;
+      bodyStr += `${caption}\r\n`;
+      bodyStr += `--${boundary}\r\n`;
+      bodyStr += `Content-Disposition: form-data; name="photo"; filename="palm_${i}.jpg"\r\n`;
+      bodyStr += `Content-Type: image/jpeg\r\n\r\n`;
+
+      const bodyStart = Buffer.from(bodyStr, 'utf8');
+      const bodyEnd   = Buffer.from(`\r\n--${boundary}--\r\n`, 'utf8');
+      const full      = Buffer.concat([bodyStart, buffer, bodyEnd]);
 
       const photoRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
         method: 'POST',
-        body: form,
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          'Content-Length': full.length,
+        },
+        body: full,
       });
 
       const photoData = await photoRes.json();
-      if (!photoData.ok) throw new Error(`Photo ${i+1} failed: ` + photoData.description);
+      if (!photoData.ok) {
+        console.error(`Photo ${i + 1} failed:`, photoData.description);
+      }
     }
 
-    return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
+    return res.status(200).json({ ok: true });
 
   } catch (err) {
-    return new Response(JSON.stringify({ ok: false, error: err.message }), { status: 500, headers });
+    console.error('Submit error:', err);
+    return res.status(500).json({ ok: false, error: err.message });
   }
 }

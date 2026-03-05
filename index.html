@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ការអានដៃ · Palm Reading</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Noto+Serif+Khmer:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0d0a1a;
+    --deep: #130e2b;
+    --card: #1a1435;
+    --border: #2e2550;
+    --gold: #c9a84c;
+    --gold-light: #e8c96e;
+    --gold-dim: rgba(201,168,76,0.15);
+    --text: #e8e0f0;
+    --muted: #8a80a8;
+    --error: #e05c6a;
+    --success: #5cc9a0;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Serif Khmer', 'Cormorant Garamond', serif;
+    background: var(--ink);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(90,60,160,0.25) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 35% at 80% 80%, rgba(180,120,40,0.12) 0%, transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Stars */
+  .stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute; border-radius: 50%;
+    background: var(--gold-light);
+    animation: twinkle var(--d, 3s) ease-in-out infinite alternate;
+    opacity: 0;
+  }
+  @keyframes twinkle { 0%{opacity:0.05} 100%{opacity:0.5} }
+
+  /* App Shell */
+  #app {
+    position: relative; z-index: 1;
+    max-width: 480px; margin: 0 auto;
+    padding: 0 0 40px;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .app-header {
+    text-align: center;
+    padding: 28px 20px 20px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .app-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 50%;
+    transform: translateX(-50%);
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .palm-icon {
+    font-size: 38px; line-height: 1;
+    filter: drop-shadow(0 0 12px rgba(201,168,76,0.6));
+    margin-bottom: 6px;
+    display: block;
+    animation: float 4s ease-in-out infinite;
+  }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  .app-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600;
+    color: var(--gold-light);
+    letter-spacing: 2px;
+  }
+  .app-subtitle {
+    font-size: 11px; color: var(--muted);
+    margin-top: 3px; letter-spacing: 1px;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+  }
+
+  /* Progress */
+  .progress-bar {
+    display: flex; gap: 6px;
+    padding: 16px 20px 0;
+    align-items: center;
+    justify-content: center;
+  }
+  .progress-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border);
+    transition: all 0.4s ease;
+  }
+  .progress-dot.active {
+    background: var(--gold);
+    box-shadow: 0 0 8px rgba(201,168,76,0.7);
+    width: 24px; border-radius: 4px;
+  }
+  .progress-dot.done { background: var(--gold-dim); border: 1px solid var(--gold); }
+
+  /* Section */
+  .section {
+    padding: 20px 16px;
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+  .section.active { display: block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 600;
+    color: var(--gold-light);
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title .icon { font-size: 20px; }
+  .section-desc {
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 18px; line-height: 1.6;
+  }
+
+  /* Form Fields */
+  .field-group { margin-bottom: 14px; }
+  .field-label {
+    display: block;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-family: 'Cormorant Garamond', serif;
+  }
+  .field-label .khmer {
+    font-family: 'Noto Serif Khmer', serif;
+    text-transform: none; letter-spacing: 0;
+    font-size: 12px;
+  }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'Noto Serif Khmer', 'Cormorant Garamond', serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+  }
+  input::placeholder { color: var(--muted); opacity: 0.7; }
+  select option { background: var(--deep); }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .field-error { font-size: 11px; color: var(--error); margin-top: 4px; display: none; }
+  .field-group.has-error input,
+  .field-group.has-error select { border-color: var(--error); }
+  .field-group.has-error .field-error { display: block; }
+
+  /* Gender Radio */
+  .gender-group {
+    display: flex; gap: 10px;
+  }
+  .gender-opt {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px;
+    padding: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+  }
+  .gender-opt input[type=radio] { display: none; }
+  .gender-opt.selected {
+    border-color: var(--gold);
+    background: var(--gold-dim);
+    color: var(--gold-light);
+  }
+  .gender-opt .emoji { font-size: 18px; }
+
+  /* Palm Upload Section */
+  .palm-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  .palm-slot {
+    background: var(--card);
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    aspect-ratio: 3/4;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .palm-slot:active { transform: scale(0.97); }
+  .palm-slot.has-image { border-style: solid; border-color: var(--gold); }
+
+  .palm-slot-label {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(0deg, rgba(13,10,26,0.92) 0%, transparent 100%);
+    padding: 10px 8px 8px;
+    font-size: 11px; color: var(--gold-light);
+    text-align: center;
+    font-family: 'Noto Serif Khmer', serif;
+    line-height: 1.3;
+  }
+  .palm-slot-label .en { font-family: 'Cormorant Garamond', serif; font-style: italic; color: var(--muted); font-size: 10px; }
+
+  .palm-placeholder {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 6px;
+    pointer-events: none;
+  }
+  .palm-placeholder .guide-icon { font-size: 32px; opacity: 0.5; }
+  .palm-placeholder .add-text { font-size: 11px; color: var(--muted); }
+
+  /* Palm overlay guide using SVG */
+  .palm-guide-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+    padding: 10% 15% 20%;
+  }
+  .palm-guide-overlay svg { width: 100%; height: 100%; opacity: 0.22; }
+
+  .palm-slot img.preview {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    border-radius: calc(var(--radius) - 2px);
+  }
+
+  .palm-slot .remove-btn {
+    position: absolute; top: 6px; right: 6px;
+    width: 24px; height: 24px;
+    background: rgba(13,10,26,0.85);
+    border: 1px solid var(--error);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: var(--error);
+    z-index: 10; cursor: pointer;
+    display: none;
+  }
+  .palm-slot.has-image .remove-btn { display: flex; }
+
+  /* Camera Modal */
+  .camera-modal {
+    position: fixed; inset: 0; z-index: 100;
+    background: #000;
+    display: none; flex-direction: column;
+  }
+  .camera-modal.open { display: flex; }
+
+  .camera-header {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    z-index: 10;
+    background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+  }
+  .camera-header .label {
+    font-family: 'Noto Serif Khmer', serif;
+    font-size: 13px; color: #fff;
+    text-align: center; flex: 1;
+  }
+  .camera-header .label .en { font-size: 11px; color: rgba(255,255,255,0.6); display: block; }
+  .cam-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px; padding: 6px 12px;
+    color: #fff; font-size: 12px; cursor: pointer;
+  }
+
+  #cameraVideo {
+    width: 100%; height: 100%; object-fit: cover;
+    position: absolute; inset: 0;
+  }
+
+  .palm-frame-overlay {
+    position: absolute; inset: 0; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .palm-frame-overlay svg { width: 65vw; max-width: 280px; opacity: 0.7; }
+
+  .corner-guides {
+    position: absolute;
+    inset: 10%;
+    pointer-events: none;
+  }
+  .corner {
+    position: absolute;
+    width: 24px; height: 24px;
+    border-color: var(--gold);
+    border-style: solid;
+    opacity: 0.8;
+  }
+  .corner.tl { top: 0; left: 0; border-width: 3px 0 0 3px; }
+  .corner.tr { top: 0; right: 0; border-width: 3px 3px 0 0; }
+  .corner.bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; }
+  .corner.br { bottom: 0; right: 0; border-width: 0 3px 3px 0; }
+
+  .instruction-bar {
+    position: absolute; bottom: 90px; left: 0; right: 0;
+    text-align: center; pointer-events: none;
+  }
+  .instruction-bar p {
+    display: inline-block;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px; color: #fff;
+    font-family: 'Noto Serif Khmer', serif;
+  }
+
+  .capture-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 16px 20px 24px;
+    display: flex; align-items: center; justify-content: space-around;
+    background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+    z-index: 10;
+  }
+  .capture-btn {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    border: 3px solid var(--gold);
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .capture-btn::after {
+    content: '';
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    background: #fff;
+  }
+  .capture-btn:active::after { background: var(--gold-light); transform: scale(0.92); }
+
+  .upload-file-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 8px; padding: 8px 14px;
+    color: #fff; font-size: 12px; cursor: pointer;
+    font-family: 'Noto Serif Khmer', serif;
+  }
+
+  #captureCanvas { display: none; }
+
+  /* Submit / Confirmation */
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #b8942a 0%, var(--gold) 50%, #d4aa50 100%);
+    border: none; border-radius: 12px;
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px; font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.35);
+  }
+  .submit-btn:active { transform: scale(0.98); opacity: 0.9; }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .nav-btns {
+    display: flex; gap: 10px; margin-top: 16px;
+  }
+  .btn-back {
+    flex: 1; padding: 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--muted);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .btn-back:hover { border-color: var(--muted); }
+  .btn-next {
+    flex: 2; padding: 12px;
+    background: var(--gold-dim);
+    border: 1px solid var(--gold);
+    border-radius: 12px;
+    color: var(--gold-light);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-next:hover { background: rgba(201,168,76,0.25); }
+
+  /* Success Screen */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+    animation: fadeIn 0.5s ease;
+  }
+  .success-screen.show { display: block; }
+
+  .success-icon {
+    font-size: 64px;
+    display: block; margin: 0 auto 16px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+
+  .success-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px; color: var(--gold-light);
+    margin-bottom: 8px;
+  }
+  .success-msg {
+    font-size: 14px; color: var(--muted);
+    line-height: 1.7; margin-bottom: 24px;
+  }
+
+  .receipt-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: left;
+    margin-top: 16px;
+  }
+  .receipt-row {
+    display: flex; justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .receipt-row:last-child { border-bottom: none; }
+  .receipt-row .key { color: var(--muted); }
+  .receipt-row .val { color: var(--text); font-weight: 500; text-align: right; max-width: 60%; }
+
+  .locked-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(92,201,160,0.12);
+    border: 1px solid rgba(92,201,160,0.4);
+    border-radius: 20px; padding: 4px 12px;
+    font-size: 11px; color: var(--success);
+    margin-top: 12px;
+  }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 16px 0;
+  }
+
+  /* Loading overlay */
+  .loading-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(13,10,26,0.85);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 14px;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .loading-text { color: var(--muted); font-size: 13px; font-family: 'Noto Serif Khmer', serif; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: var(--deep); border: 1px solid var(--border);
+    border-radius: 24px; padding: 10px 20px;
+    font-size: 13px; color: var(--text);
+    z-index: 300;
+    white-space: nowrap;
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+    font-family: 'Noto Serif Khmer', serif;
+  }
+  .toast.show { opacity: 1; }
+  .toast.error { border-color: var(--error); color: var(--error); }
+  .toast.success { border-color: var(--success); color: var(--success); }
+
+  /* Review section */
+  .review-images {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 6px;
+    margin-bottom: 12px;
+  }
+  .review-img {
+    aspect-ratio: 3/4;
+    border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .review-img img { width: 100%; height: 100%; object-fit: cover; }
+  .review-img .no-img {
+    width: 100%; height: 100%;
+    background: var(--card);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; opacity: 0.4;
+  }
+
+  .info-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .info-row {
+    display: flex; padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px; gap: 10px;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-key { color: var(--muted); min-width: 110px; flex-shrink: 0; }
+  .info-val { color: var(--text); }
+
+  /* Khmer year select */
+  .khmer-year-display {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'Noto Serif Khmer', serif;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .khmer-year-display .arrow { color: var(--muted); font-size: 11px; }
+
+  .tod-btn {
+    flex: 1;
+    padding: 7px 4px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Noto Serif Khmer', serif;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tod-btn.selected {
+    border-color: var(--gold);
+    background: var(--gold-dim);
+    color: var(--gold-light);
+  }
+
+  /* Scroll */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- Stars -->
+<div class="stars" id="stars"></div>
+
+<!-- Camera Modal -->
+<div class="camera-modal" id="cameraModal">
+  <video id="cameraVideo" autoplay playsinline muted></video>
+  <canvas id="captureCanvas"></canvas>
+
+  <div class="camera-header">
+    <button class="cam-btn" onclick="closeCamera()">✕ បិទ</button>
+    <div class="label">
+      <span id="camSlotLabel">ដៃឆ្វេង</span>
+      <span class="en" id="camSlotLabelEn">Left Palm</span>
+    </div>
+    <button class="cam-btn" onclick="switchCamera()">🔄</button>
+  </div>
+
+  <!-- Palm alignment overlay -->
+  <div class="palm-frame-overlay">
+    <svg id="palmGuideSvg" viewBox="0 0 200 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Hand silhouette guide -->
+      <path d="M95 290 C60 290 35 265 30 235 L18 145 C16 133 22 122 34 120 C40 119 46 121 50 126 L50 80 C50 68 59 58 71 58 C83 58 92 68 92 80 L92 60 C92 48 101 38 113 38 C125 38 134 48 134 60 L134 68 C136 58 145 50 156 50 C168 50 177 59 177 71 L177 145 C180 140 186 137 193 138 C200 139 205 146 204 153 L196 220 C193 258 162 290 125 290 Z" stroke="#c9a84c" stroke-width="3" fill="rgba(201,168,76,0.06)"/>
+      <!-- Finger lines -->
+      <line x1="71" y1="58" x2="71" y2="20" stroke="#c9a84c" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/>
+      <line x1="113" y1="38" x2="113" y2="5" stroke="#c9a84c" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/>
+      <line x1="156" y1="50" x2="156" y2="16" stroke="#c9a84c" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/>
+      <!-- Wrist lines -->
+      <line x1="50" y1="230" x2="177" y2="230" stroke="#c9a84c" stroke-width="1" stroke-dasharray="3,4" opacity="0.4"/>
+    </svg>
+  </div>
+
+  <div class="corner-guides">
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+  </div>
+
+  <div class="instruction-bar">
+    <p id="camInstruction">ដាក់ដៃរបស់អ្នកក្នុងក្របខ័ណ្ឌ · Align your palm inside the frame</p>
+  </div>
+
+  <div class="capture-bar">
+    <label class="upload-file-btn" for="fileInput">📁 ជ្រើស​រូប</label>
+    <button class="capture-btn" onclick="capturePhoto()"></button>
+    <div style="width:60px"></div>
+  </div>
+
+  <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+</div>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p class="loading-text">កំពុងផ្ញើ... Sending...</p>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Main App -->
+<div id="app">
+
+  <header class="app-header">
+    <span class="palm-icon">🖐️</span>
+    <div class="app-title">PALM READING</div>
+    <div class="app-subtitle">ការអានដៃ · ស្វែងរកជោគជ័យ</div>
+  </header>
+
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-dot active" id="dot0"></div>
+    <div class="progress-dot" id="dot1"></div>
+    <div class="progress-dot" id="dot2"></div>
+  </div>
+
+  <!-- STEP 0: Personal Info -->
+  <div class="section active" id="step0">
+    <div class="section-title"><span class="icon">✦</span> ព័ត៌មានផ្ទាល់ខ្លួន</div>
+    <div class="section-desc">Personal Information · Please fill in all fields</div>
+
+    <div class="field-group" id="fg-fullname">
+      <label class="field-label">Full Name <span class="khmer">· ឈ្មោះពេញ</span></label>
+      <input type="text" id="fullName" placeholder="ឈ្មោះពេញ · Full name">
+      <div class="field-error">Required · សូមបំពេញ</div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-group" id="fg-dob">
+        <label class="field-label">Date of Birth <span class="khmer">· ថ្ងៃខែឆ្នាំ</span></label>
+        <input type="date" id="dob">
+        <div class="field-error">Required</div>
+      </div>
+      <div class="field-group" id="fg-tob">
+        <label class="field-label">Time of Birth <span class="khmer">· ម៉ោង</span> <span style="color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></label>
+        <input type="time" id="tob" placeholder="--:--">
+        <div style="display:flex;gap:6px;margin-top:6px;" id="timeOfDayGroup">
+          <button type="button" class="tod-btn" id="tod-morning" onclick="selectTOD('morning')">🌅 ព្រឹក</button>
+          <button type="button" class="tod-btn" id="tod-afternoon" onclick="selectTOD('afternoon')">🌤 ថ្ងៃ</button>
+          <button type="button" class="tod-btn" id="tod-evening" onclick="selectTOD('evening')">🌆 ល្ងាច</button>
+          <button type="button" class="tod-btn" id="tod-night" onclick="selectTOD('night')">🌙 យប់</button>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">បញ្ចូលម៉ោង ឬជ្រើសអំឡុងពេល · Enter exact time or pick a period</div>
+      </div>
+    </div>
+
+    <div class="field-group" id="fg-khmeryear">
+      <label class="field-label"><span class="khmer">ឆ្នាំកំណើត (ខ្មែរ)</span></label>
+      <select id="khmerYear">
+        <option value="">-- ជ្រើស​ឆ្នាំ --</option>
+        <option value="ជូត">ជូត (Rat)</option>
+        <option value="ឆ្លូវ">ឆ្លូវ (Ox)</option>
+        <option value="ខាល">ខាល (Tiger)</option>
+        <option value="ថោះ">ថោះ (Rabbit)</option>
+        <option value="រោង">រោង (Dragon)</option>
+        <option value="ម្សាញ់">ម្សាញ់ (Snake)</option>
+        <option value="មមី">មមី (Horse)</option>
+        <option value="មមែ">មមែ (Goat)</option>
+        <option value="វក">វក (Monkey)</option>
+        <option value="រកា">រកា (Rooster)</option>
+        <option value="ច">ច (Dog)</option>
+        <option value="កុរ">កុរ (Pig)</option>
+      </select>
+      <div class="field-error">Required · សូមជ្រើស</div>
+    </div>
+
+    <div class="field-group" id="fg-phone">
+      <label class="field-label">Phone Number <span class="khmer">· លេខទូរស័ព្ទ</span></label>
+      <input type="tel" id="phone" placeholder="012 345 678">
+      <div class="field-error">Required · សូមបំពេញ</div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Gender <span class="khmer">· ភេទ</span></label>
+      <div class="gender-group" id="genderGroup">
+          <label class="gender-opt" id="g-male" onclick="selectGender('ប្រុស')">
+            <input type="radio" name="gender" value="ប្រុស">
+            <span class="emoji">👨</span> ប្រុស · Male
+          </label>
+          <label class="gender-opt" id="g-female" onclick="selectGender('ស្រី')">
+            <input type="radio" name="gender" value="ស្រី">
+            <span class="emoji">👩</span> ស្រី · Female
+          </label>
+        </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn-next" onclick="goToStep(1)">បន្ទាប់ · Next →</button>
+    </div>
+  </div>
+
+  <!-- STEP 1: Palm Photos -->
+  <div class="section" id="step1">
+    <div class="section-title"><span class="icon">✦</span> រូបដៃ · Palm Photos</div>
+    <div class="section-desc">Upload 4 photos of your palm. Tap each to capture or upload. · ថតរូបដៃ ៤ ទិស</div>
+
+    <div class="palm-grid">
+      <div class="palm-slot" id="slot-0" onclick="openCamera(0)">
+        <div class="palm-guide-overlay"><?xml version="1.0"?><svg viewBox="0 0 100 140" fill="none"><path d="M47 132 C30 132 18 120 16 106 L10 65 C9 59 12 54 18 53 C21 52.5 24 54 25.5 57 L25.5 35 C25.5 30 29.5 26 34.5 26 C39.5 26 43.5 30 43.5 35 L43.5 26 C43.5 21 47.5 17 52.5 17 C57.5 17 61.5 21 61.5 26 L61.5 30 C62.5 25 66.5 21.5 71.5 21.5 C76.5 21.5 80.5 25.5 80.5 30.5 L80.5 65 C82 62 85 60.5 88 61 C91 61.5 93 64.5 92.5 67.5 L89 100 C87.5 118 75 132 59 132 Z" stroke="#c9a84c" stroke-width="3" fill="rgba(201,168,76,0.05)"/></svg></div>
+        <div class="palm-placeholder">
+          <div class="guide-icon">🖐️</div>
+          <div class="add-text">+ ថត/ជ្រើស</div>
+        </div>
+        <div class="palm-slot-label">ដៃឆ្វេង (ខាងក្នុង)<div class="en">Left · Palm Side</div></div>
+        <button class="remove-btn" onclick="removeImage(event,0)">✕</button>
+      </div>
+
+      <div class="palm-slot" id="slot-1" onclick="openCamera(1)">
+        <div class="palm-guide-overlay"><?xml version="1.0"?><svg viewBox="0 0 100 140" fill="none"><path d="M53 132 C70 132 82 120 84 106 L90 65 C91 59 88 54 82 53 C79 52.5 76 54 74.5 57 L74.5 35 C74.5 30 70.5 26 65.5 26 C60.5 26 56.5 30 56.5 35 L56.5 26 C56.5 21 52.5 17 47.5 17 C42.5 17 38.5 21 38.5 26 L38.5 30 C37.5 25 33.5 21.5 28.5 21.5 C23.5 21.5 19.5 25.5 19.5 30.5 L19.5 65 C18 62 15 60.5 12 61 C9 61.5 7 64.5 7.5 67.5 L11 100 C12.5 118 25 132 41 132 Z" stroke="#c9a84c" stroke-width="3" fill="rgba(201,168,76,0.05)"/></svg></div>
+        <div class="palm-placeholder">
+          <div class="guide-icon">🤚</div>
+          <div class="add-text">+ ថត/ជ្រើស</div>
+        </div>
+        <div class="palm-slot-label">ដៃស្ដាំ (ខាងក្នុង)<div class="en">Right · Palm Side</div></div>
+        <button class="remove-btn" onclick="removeImage(event,1)">✕</button>
+      </div>
+
+      <div class="palm-slot" id="slot-2" onclick="openCamera(2)">
+        <div class="palm-guide-overlay"><svg viewBox="0 0 100 180" fill="none"><path d="M30 170 C18 160 14 140 14 120 L14 50 C14 40 20 32 28 32 C36 32 42 40 42 50 L42 20 C42 10 50 4 58 4 C66 4 72 10 72 20 L72 170 Z" stroke="#c9a84c" stroke-width="3" fill="rgba(201,168,76,0.05)"/><line x1="14" y1="90" x2="72" y2="90" stroke="#c9a84c" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/></svg></div>
+        <div class="palm-placeholder">
+          <div class="guide-icon">✋</div>
+          <div class="add-text">+ ថត/ជ្រើស</div>
+        </div>
+        <div class="palm-slot-label">ដៃឆ្វេង (ខាងក្រៅ)<div class="en">Left · Side View</div></div>
+        <button class="remove-btn" onclick="removeImage(event,2)">✕</button>
+      </div>
+
+      <div class="palm-slot" id="slot-3" onclick="openCamera(3)">
+        <div class="palm-guide-overlay"><svg viewBox="0 0 100 180" fill="none"><path d="M70 170 C82 160 86 140 86 120 L86 50 C86 40 80 32 72 32 C64 32 58 40 58 50 L58 20 C58 10 50 4 42 4 C34 4 28 10 28 20 L28 170 Z" stroke="#c9a84c" stroke-width="3" fill="rgba(201,168,76,0.05)"/><line x1="28" y1="90" x2="86" y2="90" stroke="#c9a84c" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/></svg></div>
+        <div class="palm-placeholder">
+          <div class="guide-icon">🤚</div>
+          <div class="add-text">+ ថត/ជ្រើស</div>
+        </div>
+        <div class="palm-slot-label">ដៃស្ដាំ (ខាងក្រៅ)<div class="en">Right · Side View</div></div>
+        <button class="remove-btn" onclick="removeImage(event,3)">✕</button>
+      </div>
+    </div>
+
+    <div id="palmError" style="color:var(--error);font-size:12px;margin-top:8px;display:none;">
+      ⚠ សូមថតរូបដៃ ៤ · Please upload all 4 palm photos
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn-back" onclick="goToStep(0)">← ត្រឡប់</button>
+      <button class="btn-next" onclick="goToStep(2)">ពិនិត្យ · Review →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Review & Submit -->
+  <div class="section" id="step2">
+    <div class="section-title"><span class="icon">✦</span> ពិនិត្យ & ផ្ញើ</div>
+    <div class="section-desc">Review your information before submitting · ពិនិត្យព័ត៌មានរបស់អ្នក</div>
+
+    <div class="review-images" id="reviewImages"></div>
+
+    <div class="info-card" id="reviewInfo"></div>
+
+    <p style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;">
+      ⚠ បន្ទាប់ពីផ្ញើ អ្នកមិនអាចកែប្រែបានទៀតទេ · After submission, no edits allowed.
+    </p>
+
+    <button class="submit-btn" id="submitBtn" onclick="submitForm()">
+      ✦ ផ្ញើ · Submit ✦
+    </button>
+
+    <div class="nav-btns">
+      <button class="btn-back" onclick="goToStep(1)">← កែប្រែ</button>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-screen" id="successScreen">
+    <span class="success-icon">🌟</span>
+    <div class="success-title">ផ្ញើបានជោគជ័យ!</div>
+    <div class="success-msg">
+      ព័ត៌មានរបស់អ្នកត្រូវបានផ្ញើដោយជោគជ័យ<br>
+      <span style="font-style:italic;font-family:'Cormorant Garamond',serif;">Your palm reading request has been submitted successfully.</span><br><br>
+      យើងនឹងទំនាក់ទំនងអ្នកឆាប់ៗ · We will contact you soon.
+    </div>
+    <span class="locked-badge">🔒 ដាក់ស្នើ · Submitted & Locked</span>
+
+    <div class="receipt-card" id="receiptCard"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── CONFIG ────────────────────────────────────────────────
+// ⚙️  Set your Telegram Bot Token and Master Chat ID here
+const BOT_TOKEN  = 'YOUR_BOT_TOKEN';       // e.g. '123456789:ABCdef...'
+const MASTER_CHAT_ID = 'YOUR_CHAT_ID';     // e.g. '-1001234567890'
+// ───────────────────────────────────────────────────────────
+
+// Init Telegram WebApp
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor('#0d0a1a');
+  tg.setBackgroundColor('#0d0a1a');
+}
+
+// ─── STARS ──────────────────────────────────────────────────
+(function createStars() {
+  const c = document.getElementById('stars');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;animation-delay:${Math.random()*5}s`;
+    c.appendChild(s);
+  }
+})();
+
+// ─── STATE ──────────────────────────────────────────────────
+let currentStep = 0;
+let selectedGender = '';
+let palmImages = [null, null, null, null]; // base64
+let currentSlot = 0;
+let cameraStream = null;
+let facingMode = 'user'; // front camera for palm
+
+const slotMeta = [
+  { km: 'ដៃឆ្វេង (ខាងក្នុង)', en: 'Left Palm', instr: 'ដាក់ដៃឆ្វេង ខាងក្នុងក្នុងក្របខ័ណ្ឌ · Place LEFT PALM (front) inside the frame' },
+  { km: 'ដៃស្ដាំ (ខាងក្នុង)', en: 'Right Palm', instr: 'ដាក់ដៃស្ដាំ ខាងក្នុងក្នុងក្របខ័ណ្ឌ · Place RIGHT PALM (front) inside the frame' },
+  { km: 'ដៃឆ្វេង (ខាងក្រៅ)', en: 'Left Side', instr: 'ដៃឆ្វេង ថតពីចំហៀង · LEFT hand SIDE view' },
+  { km: 'ដៃស្ដាំ (ខាងក្រៅ)', en: 'Right Side', instr: 'ដៃស្ដាំ ថតពីចំហៀង · RIGHT hand SIDE view' },
+];
+
+// ─── NAVIGATION ─────────────────────────────────────────────
+function goToStep(step) {
+  if (step === 1 && !validateStep0()) return;
+  if (step === 2 && !validateStep1()) return;
+  if (step === 2) buildReview();
+
+  document.getElementById(`step${currentStep}`).classList.remove('active');
+  currentStep = step;
+  document.getElementById(`step${currentStep}`).classList.add('active');
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+  for (let i = 0; i < 3; i++) {
+    const d = document.getElementById(`dot${i}`);
+    d.className = 'progress-dot';
+    if (i < currentStep) d.classList.add('done');
+    else if (i === currentStep) d.classList.add('active');
+  }
+}
+
+// ─── VALIDATION ─────────────────────────────────────────────
+function validateStep0() {
+  let ok = true;
+  const fields = [
+    ['fg-fullname', 'fullName'],
+    ['fg-dob', 'dob'],
+    ['fg-khmeryear', 'khmerYear'],
+    ['fg-phone', 'phone'],
+  ];
+  fields.forEach(([fg, id]) => {
+    const el = document.getElementById(id);
+    const fg_el = document.getElementById(fg);
+    if (!el.value.trim()) {
+      fg_el.classList.add('has-error'); ok = false;
+    } else {
+      fg_el.classList.remove('has-error');
+    }
+  });
+  if (!selectedGender) {
+    showToast('⚠ ជ្រើសភេទ · Please select gender', 'error');
+    ok = false;
+  }
+  return ok;
+}
+
+function validateStep1() {
+  const missing = palmImages.filter(x => !x).length;
+  if (missing > 0) {
+    document.getElementById('palmError').style.display = 'block';
+    return false;
+  }
+  document.getElementById('palmError').style.display = 'none';
+  return true;
+}
+
+// ─── GENDER ─────────────────────────────────────────────────
+function selectGender(v) {
+  selectedGender = v;
+  ['g-male','g-female'].forEach(id => {
+    document.getElementById(id).classList.remove('selected');
+  });
+  const map = { 'ប្រុស': 'g-male', 'ស្រី': 'g-female' };
+  if (map[v]) document.getElementById(map[v]).classList.add('selected');
+}
+
+let selectedTOD = '';
+const todLabels = { morning: '🌅 ព្រឹក (Morning)', afternoon: '🌤 ថ្ងៃ (Afternoon)', evening: '🌆 ល្ងាច (Evening)', night: '🌙 យប់ (Night)' };
+function selectTOD(period) {
+  selectedTOD = period;
+  ['morning','afternoon','evening','night'].forEach(p => {
+    document.getElementById('tod-'+p).classList.toggle('selected', p === period);
+  });
+  // clear exact time if period chosen
+  document.getElementById('tob').value = '';
+}
+
+// ─── CAMERA ─────────────────────────────────────────────────
+function openCamera(slotIndex) {
+  currentSlot = slotIndex;
+  const meta = slotMeta[slotIndex];
+  document.getElementById('camSlotLabel').textContent = meta.km;
+  document.getElementById('camSlotLabelEn').textContent = meta.en;
+  document.getElementById('camInstruction').textContent = meta.instr;
+
+  document.getElementById('cameraModal').classList.add('open');
+  startCamera();
+}
+
+async function startCamera() {
+  try {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(t => t.stop());
+    }
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } },
+      audio: false
+    });
+    document.getElementById('cameraVideo').srcObject = cameraStream;
+  } catch (e) {
+    showToast('Camera not available · ប្រើ Upload ជំនួស', 'error');
+    document.getElementById('fileInput').click();
+  }
+}
+
+function switchCamera() {
+  facingMode = facingMode === 'user' ? 'environment' : 'user';
+  startCamera();
+}
+
+function closeCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  document.getElementById('cameraModal').classList.remove('open');
+}
+
+function capturePhoto() {
+  const video = document.getElementById('cameraVideo');
+  const canvas = document.getElementById('captureCanvas');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+  saveToSlot(currentSlot, dataUrl);
+  closeCamera();
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    saveToSlot(currentSlot, ev.target.result);
+    closeCamera();
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function saveToSlot(idx, dataUrl) {
+  palmImages[idx] = dataUrl;
+  const slot = document.getElementById(`slot-${idx}`);
+  slot.classList.add('has-image');
+
+  // remove old preview if any
+  const oldImg = slot.querySelector('img.preview');
+  if (oldImg) oldImg.remove();
+
+  // hide placeholder
+  const ph = slot.querySelector('.palm-placeholder');
+  if (ph) ph.style.display = 'none';
+  const ov = slot.querySelector('.palm-guide-overlay');
+  if (ov) ov.style.display = 'none';
+
+  // add preview
+  const img = document.createElement('img');
+  img.className = 'preview';
+  img.src = dataUrl;
+  slot.insertBefore(img, slot.querySelector('.palm-slot-label'));
+}
+
+function removeImage(e, idx) {
+  e.stopPropagation();
+  palmImages[idx] = null;
+  const slot = document.getElementById(`slot-${idx}`);
+  slot.classList.remove('has-image');
+  const img = slot.querySelector('img.preview');
+  if (img) img.remove();
+  const ph = slot.querySelector('.palm-placeholder');
+  if (ph) ph.style.display = 'flex';
+  const ov = slot.querySelector('.palm-guide-overlay');
+  if (ov) ov.style.display = 'flex';
+}
+
+// ─── REVIEW ─────────────────────────────────────────────────
+function buildReview() {
+  // Images row
+  const ri = document.getElementById('reviewImages');
+  ri.innerHTML = palmImages.map((img, i) => `
+    <div class="review-img">
+      ${img ? `<img src="${img}" alt="${slotMeta[i].en}">` : `<div class="no-img">🖐️</div>`}
+    </div>
+  `).join('');
+
+  // Info card
+  const info = document.getElementById('reviewInfo');
+  const rows = [
+    ['ឈ្មោះ · Name', document.getElementById('fullName').value],
+    ['ថ្ងៃខែឆ្នាំ · DOB', document.getElementById('dob').value],
+    ['ម៉ោងកំណើត · Time', document.getElementById('tob').value],
+    ['ឆ្នាំ (ខ្មែរ)', document.getElementById('khmerYear').value],
+    ['ទូរស័ព្ទ · Phone', document.getElementById('phone').value],
+    ['ភេទ · Gender', selectedGender],
+  ];
+  info.innerHTML = rows.map(([k, v]) => `
+    <div class="info-row">
+      <span class="info-key">${k}</span>
+      <span class="info-val">${v || '—'}</span>
+    </div>
+  `).join('');
+}
+
+// ─── SUBMIT ─────────────────────────────────────────────────
+async function submitForm() {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  showLoading(true);
+
+  const userData = {
+    fullName:  document.getElementById('fullName').value,
+    dob:       document.getElementById('dob').value,
+    tob:       document.getElementById('tob').value || (selectedTOD ? todLabels[selectedTOD] : 'មិនដឹង (Unknown)'),
+    khmerYear: document.getElementById('khmerYear').value,
+    phone:     document.getElementById('phone').value,
+    gender:    selectedGender,
+    tgUser:    tg?.initDataUnsafe?.user || {},
+    timestamp: new Date().toISOString(),
+  };
+
+  try {
+    // Build message text
+    const msgText = `🖐 *Palm Reading Request*\n\n` +
+      `👤 *ឈ្មោះ:* ${userData.fullName}\n` +
+      `📅 *DOB:* ${userData.dob}\n` +
+      `🕐 *Time:* ${userData.tob}\n` +
+      `🐉 *ឆ្នាំ:* ${userData.khmerYear}\n` +
+      `📱 *Phone:* ${userData.phone}\n` +
+      `⚧ *Gender:* ${userData.gender}\n` +
+      `👤 *TG User:* @${userData.tgUser.username || 'N/A'} (${userData.tgUser.first_name || ''} ${userData.tgUser.last_name || ''})\n` +
+      `🕐 *Submitted:* ${new Date().toLocaleString('km-KH')}`;
+
+    // Send text message first
+    await sendTelegramMessage(msgText);
+
+    // Send palm images as media group
+    const validImages = palmImages.map((img, i) => ({ img, label: slotMeta[i].en })).filter(x => x.img);
+    for (const { img, label } of validImages) {
+      await sendTelegramPhoto(img, label);
+    }
+
+    showLoading(false);
+    showSuccessScreen(userData);
+
+    // Notify via Telegram.WebApp
+    if (tg) {
+      tg.HapticFeedback?.notificationOccurred('success');
+      tg.sendData(JSON.stringify({ submitted: true, name: userData.fullName }));
+    }
+
+  } catch (err) {
+    showLoading(false);
+    btn.disabled = false;
+    showToast('❌ Error: ' + err.message, 'error');
+    console.error(err);
+  }
+}
+
+async function sendTelegramMessage(text) {
+  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: MASTER_CHAT_ID,
+      text,
+      parse_mode: 'Markdown',
+    })
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.description || 'Telegram error');
+  return data;
+}
+
+async function sendTelegramPhoto(dataUrl, caption) {
+  // Convert base64 to Blob
+  const base64 = dataUrl.split(',')[1];
+  const byteArr = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  const blob = new Blob([byteArr], { type: 'image/jpeg' });
+
+  const form = new FormData();
+  form.append('chat_id', MASTER_CHAT_ID);
+  form.append('photo', blob, 'palm.jpg');
+  form.append('caption', `🖐 ${caption}`);
+
+  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`;
+  const res = await fetch(url, { method: 'POST', body: form });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.description || 'Photo send error');
+  return data;
+}
+
+function showSuccessScreen(userData) {
+  // Hide all steps + progress
+  document.getElementById('progressBar').style.display = 'none';
+  ['step0','step1','step2'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+
+  // Build receipt
+  const receipt = document.getElementById('receiptCard');
+  receipt.innerHTML = [
+    ['ឈ្មោះ · Name', userData.fullName],
+    ['ថ្ងៃ · DOB', userData.dob],
+    ['ម៉ោង · Time', userData.tob],
+    ['ឆ្នាំ', userData.khmerYear],
+    ['Phone', userData.phone],
+    ['ភេទ · Gender', userData.gender],
+    ['Photos', '4 / 4 ✓'],
+  ].map(([k,v]) => `
+    <div class="receipt-row">
+      <span class="key">${k}</span>
+      <span class="val">${v}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('successScreen').classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── UI HELPERS ─────────────────────────────────────────────
+function showLoading(show) {
+  document.getElementById('loadingOverlay').classList.toggle('show', show);
+}
+
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Auto-fill Khmer year from DOB
+document.getElementById('dob').addEventListener('change', function() {
+  const year = new Date(this.value).getFullYear();
+  const khmerYears = ['ជូត','ឆ្លូវ','ខាល','ថោះ','រោង','ម្សាញ់','មមី','មមែ','វក','រកា','ច','កុរ'];
+  // Cambodian 12-year cycle offset (2020 = ជូត / Rat)
+  const idx = ((year - 2020) % 12 + 12) % 12;
+  const sel = document.getElementById('khmerYear');
+  sel.value = khmerYears[idx];
+  document.getElementById('fg-khmeryear').classList.remove('has-error');
+});
+
+// Clear TOD when exact time typed
+document.getElementById('tob').addEventListener('input', function() {
+  if (this.value) {
+    selectedTOD = '';
+    ['morning','afternoon','evening','night'].forEach(p => {
+      document.getElementById('tod-'+p).classList.remove('selected');
+    });
+  }
+});
+['fullName','dob','khmerYear','phone'].forEach(id => {
+  const el = document.getElementById(id);
+  const fgMap = { fullName:'fg-fullname', dob:'fg-dob', khmerYear:'fg-khmeryear', phone:'fg-phone' };
+  el.addEventListener('change', () => {
+    if (el.value) document.getElementById(fgMap[id])?.classList.remove('has-error');
+  });
+});
+</script>
+</body>
+</html>

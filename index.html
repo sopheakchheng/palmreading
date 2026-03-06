@@ -69,7 +69,7 @@
   /* Header */
   .app-header {
     text-align: center;
-    padding: 28px 20px 20px;
+    padding: 14px 20px 12px;
     border-bottom: 1px solid var(--border);
     position: relative;
   }
@@ -82,32 +82,32 @@
     background: linear-gradient(90deg, transparent, var(--gold), transparent);
   }
   .palm-icon-img {
-    width: 90px;
-    height: 90px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     object-fit: cover;
     display: block;
-    margin: 0 auto 6px;
-    filter: drop-shadow(0 0 16px rgba(201,168,76,0.5));
+    margin: 0 auto 4px;
+    filter: drop-shadow(0 0 12px rgba(201,168,76,0.5));
     animation: float 4s ease-in-out infinite;
   }
   .palm-icon {
-    font-size: 38px; line-height: 1;
+    font-size: 30px; line-height: 1;
     filter: drop-shadow(0 0 12px rgba(201,168,76,0.6));
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     display: block;
     animation: float 4s ease-in-out infinite;
   }
-  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
   .app-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 22px; font-weight: 600;
+    font-size: 19px; font-weight: 600;
     color: var(--gold-light);
     letter-spacing: 2px;
   }
   .app-subtitle {
-    font-size: 11px; color: var(--muted);
-    margin-top: 3px; letter-spacing: 1px;
+    font-size: 10px; color: var(--muted);
+    margin-top: 2px; letter-spacing: 1px;
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
   }
@@ -115,7 +115,7 @@
   /* Progress */
   .progress-bar {
     display: flex; gap: 6px;
-    padding: 16px 20px 0;
+    padding: 8px 20px 0;
     align-items: center;
     justify-content: center;
   }
@@ -133,41 +133,42 @@
 
   /* Section */
   .section {
-    padding: 20px 16px;
+    padding: 10px 14px;
     display: none;
     animation: fadeIn 0.4s ease;
   }
   .section.active { display: block; }
   @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.2)} }
 
   .section-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 18px; font-weight: 600;
+    font-size: 16px; font-weight: 600;
     color: var(--gold-light);
-    margin-bottom: 4px;
-    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 2px;
+    display: flex; align-items: center; gap: 6px;
   }
-  .section-title .icon { font-size: 20px; }
+  .section-title .icon { font-size: 16px; }
   .section-desc {
-    font-size: 12px; color: var(--muted);
-    margin-bottom: 18px; line-height: 1.6;
+    font-size: 11px; color: var(--muted);
+    margin-bottom: 10px; line-height: 1.4;
   }
 
   /* Form Fields */
-  .field-group { margin-bottom: 14px; }
+  .field-group { margin-bottom: 8px; }
   .field-label {
     display: block;
-    font-size: 11px;
+    font-size: 10px;
     color: var(--gold);
     letter-spacing: 1.2px;
     text-transform: uppercase;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     font-family: 'Cormorant Garamond', serif;
   }
   .field-label .khmer {
     font-family: 'Noto Serif Khmer', serif;
     text-transform: none; letter-spacing: 0;
-    font-size: 12px;
+    font-size: 11px;
   }
 
   input, select, textarea {
@@ -175,10 +176,10 @@
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 11px 14px;
+    padding: 8px 12px;
     color: var(--text);
     font-family: 'Noto Serif Khmer', 'Cormorant Garamond', serif;
-    font-size: 14px;
+    font-size: 13px;
     outline: none;
     transition: border-color 0.25s, box-shadow 0.25s;
     -webkit-appearance: none;
@@ -190,28 +191,28 @@
   input::placeholder { color: var(--muted); opacity: 0.7; }
   select option { background: var(--deep); }
 
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-  .field-error { font-size: 11px; color: var(--error); margin-top: 4px; display: none; }
+  .field-error { font-size: 11px; color: var(--error); margin-top: 3px; display: none; }
   .field-group.has-error input,
   .field-group.has-error select { border-color: var(--error); }
   .field-group.has-error .field-error { display: block; }
 
   /* Gender Radio */
   .gender-group {
-    display: flex; gap: 10px;
+    display: flex; gap: 8px;
   }
   .gender-opt {
     flex: 1;
     display: flex; align-items: center; justify-content: center;
-    gap: 6px;
-    padding: 10px;
+    gap: 5px;
+    padding: 8px;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 13px;
+    font-size: 12px;
   }
   .gender-opt input[type=radio] { display: none; }
   .gender-opt.selected {
@@ -219,7 +220,7 @@
     background: var(--gold-dim);
     color: var(--gold-light);
   }
-  .gender-opt .emoji { font-size: 18px; }
+  .gender-opt .emoji { font-size: 16px; }
 
   /* Palm Upload Section */
   .palm-grid {
@@ -401,15 +402,15 @@
   /* Submit / Confirmation */
   .submit-btn {
     width: 100%;
-    padding: 14px;
+    padding: 11px;
     background: linear-gradient(135deg, #b8942a 0%, var(--gold) 50%, #d4aa50 100%);
     border: none; border-radius: 12px;
     color: var(--ink);
     font-family: 'Cormorant Garamond', serif;
-    font-size: 17px; font-weight: 600;
+    font-size: 16px; font-weight: 600;
     letter-spacing: 1px;
     cursor: pointer;
-    margin-top: 20px;
+    margin-top: 10px;
     transition: opacity 0.2s, transform 0.15s;
     box-shadow: 0 4px 20px rgba(201,168,76,0.35);
   }
@@ -417,27 +418,27 @@
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .nav-btns {
-    display: flex; gap: 10px; margin-top: 16px;
+    display: flex; gap: 8px; margin-top: 10px;
   }
   .btn-back {
-    flex: 1; padding: 12px;
+    flex: 1; padding: 10px;
     background: transparent;
     border: 1px solid var(--border);
     border-radius: 12px;
     color: var(--muted);
     font-family: 'Cormorant Garamond', serif;
-    font-size: 15px; cursor: pointer;
+    font-size: 14px; cursor: pointer;
     transition: border-color 0.2s;
   }
   .btn-back:hover { border-color: var(--muted); }
   .btn-next {
-    flex: 2; padding: 12px;
+    flex: 2; padding: 10px;
     background: var(--gold-dim);
     border: 1px solid var(--gold);
     border-radius: 12px;
     color: var(--gold-light);
     font-family: 'Cormorant Garamond', serif;
-    font-size: 15px; font-weight: 600; cursor: pointer;
+    font-size: 14px; font-weight: 600; cursor: pointer;
     transition: background 0.2s;
   }
   .btn-next:hover { background: rgba(201,168,76,0.25); }
@@ -955,6 +956,21 @@ function validateStep1() {
     return false;
   }
   document.getElementById('palmError').style.display = 'none';
+
+  // Check if any AI validation is still pending
+  const pending = palmValid.filter((v, i) => palmImages[i] && v === null).length;
+  if (pending > 0) {
+    showToast('⏳ Please wait, checking images...', '');
+    return false;
+  }
+
+  // Check if any image failed AI validation
+  const invalid = palmValid.filter((v, i) => palmImages[i] && v === false).length;
+  if (invalid > 0) {
+    showToast('⚠️ Please retake invalid palm photos', 'error');
+    return false;
+  }
+
   return true;
 }
 
@@ -1063,6 +1079,98 @@ function saveToSlot(idx, dataUrl) {
   img.className = 'preview';
   img.src = dataUrl;
   slot.insertBefore(img, slot.querySelector('.palm-slot-label'));
+
+  // AI palm validation
+  validatePalmImage(idx, dataUrl);
+}
+
+// Slot label names for validation messages
+const slotNames = ['Left Palm', 'Right Palm', 'Left Side', 'Right Side'];
+
+// Track validation state per slot: null=pending, true=ok, false=rejected
+const palmValid = [null, null, null, null];
+
+async function validatePalmImage(idx, dataUrl) {
+  const slot = document.getElementById(`slot-${idx}`);
+
+  // Show scanning indicator
+  let indicator = slot.querySelector('.scan-indicator');
+  if (!indicator) {
+    indicator = document.createElement('div');
+    indicator.className = 'scan-indicator';
+    slot.appendChild(indicator);
+  }
+  indicator.textContent = '🔍';
+  indicator.style.cssText = 'position:absolute;top:6px;right:6px;font-size:18px;z-index:10;animation:pulse 1s infinite;';
+
+  palmValid[idx] = null; // pending
+
+  try {
+    const base64 = dataUrl.split(',')[1];
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 100,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: 'image/jpeg', data: base64 }
+            },
+            {
+              type: 'text',
+              text: 'Does this image clearly show a human hand or palm that could be used for palm reading? Answer only: YES or NO, then one short reason.'
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const answer = (data?.content?.[0]?.text || '').toUpperCase();
+    const isValid = answer.startsWith('YES');
+
+    palmValid[idx] = isValid;
+
+    if (isValid) {
+      indicator.textContent = '✅';
+      indicator.style.animation = 'none';
+      setTimeout(() => { if (indicator) indicator.remove(); }, 1500);
+    } else {
+      // Mark slot as invalid
+      indicator.textContent = '❌';
+      indicator.style.animation = 'none';
+      slot.style.border = '2px solid var(--error)';
+
+      // Extract reason
+      const reason = data?.content?.[0]?.text?.replace(/^(YES|NO)[,.]?\s*/i, '') || 'Not a clear palm image';
+
+      showToast(`⚠️ ${slotNames[idx]}: ${reason}\nPlease retake.`, 'error');
+
+      // Auto-remove after 2s so user can retake
+      setTimeout(() => {
+        palmImages[idx] = null;
+        palmValid[idx] = null;
+        slot.classList.remove('has-image');
+        slot.style.border = '';
+        const img = slot.querySelector('img.preview');
+        if (img) img.remove();
+        if (indicator) indicator.remove();
+        const ph = slot.querySelector('.palm-placeholder');
+        if (ph) ph.style.display = 'flex';
+        const ov = slot.querySelector('.palm-guide-overlay');
+        if (ov) ov.style.display = 'flex';
+      }, 2500);
+    }
+  } catch (err) {
+    // If AI check fails, allow the image (don't block user)
+    palmValid[idx] = true;
+    if (indicator) indicator.remove();
+    console.warn('Palm validation skipped:', err.message);
+  }
 }
 
 function removeImage(e, idx) {
@@ -1107,10 +1215,13 @@ function buildReview() {
 }
 
 // ─── CONFIG ─────────────────────────────────────────────────
-// ✅ No secrets here! Token stored safely in Firebase.
-// After deploying your Firebase Function, paste the URL below:
 const FUNCTION_URL = 'https://palm-submit.it-chhengsopheak.workers.dev';
 // ────────────────────────────────────────────────────────────
+
+// Escape special Markdown characters to prevent Telegram parse errors
+function escMd(text) {
+  return String(text || '').replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
+}
 
 // ─── SUBMIT ─────────────────────────────────────────────────
 async function submitForm() {
@@ -1137,7 +1248,6 @@ async function submitForm() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userData, images: palmImages }),
     });
-
     const result = await res.json();
     if (!result.ok) throw new Error(result.error || 'Submission failed');
 

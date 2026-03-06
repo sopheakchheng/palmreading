@@ -707,6 +707,58 @@
       </div>
     </div>
 
+    <!-- Place of Birth -->
+    <div class="field-row">
+      <div class="field-group" id="fg-birthcountry">
+        <label class="field-label">Country <span class="khmer">· ប្រទេស</span></label>
+        <select id="birthCountry" onchange="onCountryChange()">
+          <option value="KH">🇰🇭 Cambodia</option>
+          <option value="TH">🇹🇭 Thailand</option>
+          <option value="VN">🇻🇳 Vietnam</option>
+          <option value="CN">🇨🇳 China</option>
+          <option value="US">🇺🇸 USA</option>
+          <option value="FR">🇫🇷 France</option>
+          <option value="AU">🇦🇺 Australia</option>
+          <option value="JP">🇯🇵 Japan</option>
+          <option value="KR">🇰🇷 Korea</option>
+          <option value="SG">🇸🇬 Singapore</option>
+          <option value="MY">🇲🇾 Malaysia</option>
+          <option value="OTHER">🌍 Other</option>
+        </select>
+      </div>
+      <div class="field-group" id="fg-birthcity">
+        <label class="field-label">City / Province <span class="khmer">· ខេត្ត/ក្រុង</span></label>
+        <select id="birthCitySelect" style="display:block;">
+          <option value="">-- ជ្រើស --</option>
+          <option value="ភ្នំពេញ">ភ្នំពេញ (Phnom Penh)</option>
+          <option value="សៀមរាប">សៀមរាប (Siem Reap)</option>
+          <option value="បាត់ដំបង">បាត់ដំបង (Battambang)</option>
+          <option value="កំពង់ចាម">កំពង់ចាម (Kampong Cham)</option>
+          <option value="កំពង់ស្ពឺ">កំពង់ស្ពឺ (Kampong Speu)</option>
+          <option value="កំពង់ធំ">កំពង់ធំ (Kampong Thom)</option>
+          <option value="កំពង់ឆ្នាំង">កំពង់ឆ្នាំង (Kampong Chhnang)</option>
+          <option value="កំពត">កំពត (Kampot)</option>
+          <option value="កណ្ដាល">កណ្ដាល (Kandal)</option>
+          <option value="ក្រចេះ">ក្រចេះ (Kratie)</option>
+          <option value="មណ្ឌលគីរី">មណ្ឌលគីរី (Mondulkiri)</option>
+          <option value="ពោធិ៍សាត់">ពោធិ៍សាត់ (Pursat)</option>
+          <option value="ព្រះវិហារ">ព្រះវិហារ (Preah Vihear)</option>
+          <option value="ព្រៃវែង">ព្រៃវែង (Prey Veng)</option>
+          <option value="រតនគិរី">រតនគិរី (Ratanakiri)</option>
+          <option value="ស្ទឹងត្រែង">ស្ទឹងត្រែង (Stung Treng)</option>
+          <option value="ស្វាយរៀង">ស្វាយរៀង (Svay Rieng)</option>
+          <option value="តាកែវ">តាកែវ (Takeo)</option>
+          <option value="ត្បូងឃ្មុំ">ត្បូងឃ្មុំ (Tboung Khmum)</option>
+          <option value="ឧត្ដរមានជ័យ">ឧត្ដរមានជ័យ (Oddar Meanchey)</option>
+          <option value="កែប">កែប (Kep)</option>
+          <option value="ប៉ៃលិន">ប៉ៃលិន (Pailin)</option>
+          <option value="ព្រះសីហនុ">ព្រះសីហនុ (Sihanoukville)</option>
+          <option value="other_km">Other / ផ្សេងទៀត</option>
+        </select>
+        <input type="text" id="birthCityText" placeholder="Enter city / province" style="display:none; margin-top:6px;">
+      </div>
+    </div>
+
       <div class="field-group" id="fg-tob">
         <label class="field-label">Time of Birth <span class="khmer">· ម៉ោង ពេលវេលា កើត</span> <span style="color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></label>
         <input type="time" id="tob" placeholder="--:--">
@@ -1226,6 +1278,7 @@ function buildReview() {
   const rows = [
     ['ឈ្មោះ · Name', document.getElementById('fullName').value],
     ['ថ្ងៃខែឆ្នាំ · DOB', document.getElementById('dob').value],
+    ['កន្លែងកំណើត · Birth Place', getBirthPlace()],
     ['ម៉ោងកំណើត · Time', document.getElementById('tob').value],
     ['ឆ្នាំ (ខ្មែរ)', document.getElementById('khmerYear').value],
     ['ទូរស័ព្ទ · Phone', document.getElementById('phone').value],
@@ -1258,6 +1311,7 @@ async function submitForm() {
   const userData = {
     fullName:   document.getElementById('fullName').value,
     dob:        document.getElementById('dob').value,
+    birthPlace: getBirthPlace(),
     tob:        document.getElementById('tob').value || (selectedTOD ? todLabels[selectedTOD] : 'មិនដឹង (Unknown)'),
     khmerYear:  document.getElementById('khmerYear').value,
     phone:      document.getElementById('phone').value,
@@ -1303,6 +1357,7 @@ function showSuccessScreen(userData) {
   receipt.innerHTML = [
     ['ឈ្មោះ · Name', userData.fullName],
     ['ថ្ងៃ · DOB', userData.dob],
+    ['កន្លែង · Birth Place', userData.birthPlace],
     ['ម៉ោង · Time', userData.tob],
     ['ឆ្នាំ', userData.khmerYear],
     ['Phone', userData.phone],
@@ -1331,6 +1386,46 @@ function showToast(msg, type = '') {
   t.className = 'toast show ' + type;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── PLACE OF BIRTH ─────────────────────────────────────────
+function onCountryChange() {
+  const country = document.getElementById('birthCountry').value;
+  const select  = document.getElementById('birthCitySelect');
+  const textbox = document.getElementById('birthCityText');
+  if (country === 'KH') {
+    select.style.display  = 'block';
+    textbox.style.display = 'none';
+    textbox.value = '';
+  } else {
+    select.style.display  = 'none';
+    textbox.style.display = 'block';
+    select.value = '';
+  }
+}
+
+document.getElementById('birthCitySelect').addEventListener('change', function() {
+  const textbox = document.getElementById('birthCityText');
+  if (this.value === 'other_km') {
+    textbox.style.display = 'block';
+  } else {
+    textbox.style.display = 'none';
+    textbox.value = '';
+  }
+});
+
+function getBirthPlace() {
+  const countryEl  = document.getElementById('birthCountry');
+  const countryVal = countryEl.options[countryEl.selectedIndex].text.replace(/^\S+\s/, '');
+  const select     = document.getElementById('birthCitySelect');
+  const textbox    = document.getElementById('birthCityText');
+  let city = '';
+  if (document.getElementById('birthCountry').value === 'KH') {
+    city = select.value === 'other_km' ? textbox.value.trim() : select.value;
+  } else {
+    city = textbox.value.trim();
+  }
+  return city ? `${city}, ${countryVal}` : countryVal;
 }
 
 // Auto-fill Khmer year from DOB

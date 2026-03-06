@@ -1107,8 +1107,9 @@ function buildReview() {
 }
 
 // ─── CONFIG ─────────────────────────────────────────────────
-const BOT_TOKEN      = ''; // ← paste your new token here
-const MASTER_CHAT_ID = ''; // ← paste your group chat ID here
+// ✅ No secrets here! Token stored safely in Firebase.
+// After deploying your Firebase Function, paste the URL below:
+const FUNCTION_URL = 'https://palm-submit.it-chhengsopheak.workers.dev';
 // ────────────────────────────────────────────────────────────
 
 // ─── SUBMIT ─────────────────────────────────────────────────
@@ -1131,49 +1132,14 @@ async function submitForm() {
   };
 
   try {
-    // 1. Send info message
-    const msgText =
-      `🖐 *Palm Reading Request*\n\n` +
-      `👤 *ឈ្មោះ:* ${userData.fullName}\n` +
-      `📅 *DOB:* ${userData.dob}\n` +
-      `🕐 *Time:* ${userData.tob}\n` +
-      `🐉 *ឆ្នាំ:* ${userData.khmerYear}\n` +
-      `📱 *Phone:* ${userData.phone}\n` +
-      `⚧ *Gender:* ${userData.gender}\n` +
-      `👤 *TG:* @${userData.tgUsername} (${userData.tgName})\n` +
-      `🕐 *Submitted:* ${userData.timestamp}`;
-
-    const msgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    const res = await fetch(FUNCTION_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: MASTER_CHAT_ID, text: msgText, parse_mode: 'Markdown' }),
+      body: JSON.stringify({ userData, images: palmImages }),
     });
-    const msgData = await msgRes.json();
-    if (!msgData.ok) throw new Error('Message failed: ' + msgData.description);
 
-    // 2. Send each palm photo — original quality, no compression
-    const slotLabels = ['Left Palm', 'Right Palm', 'Left Side', 'Right Side'];
-    for (let i = 0; i < palmImages.length; i++) {
-      if (!palmImages[i]) continue;
-
-      const base64 = palmImages[i].split(',')[1];
-      const mimeMatch = palmImages[i].match(/data:(image\/\w+);/);
-      const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-      const byteArr = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-      const blob = new Blob([byteArr], { type: mime });
-
-      const form = new FormData();
-      form.append('chat_id', MASTER_CHAT_ID);
-      form.append('photo', blob, `palm_${i}.jpg`);
-      form.append('caption', `🖐 ${slotLabels[i]} — ${userData.fullName}`);
-
-      const photoRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-        method: 'POST',
-        body: form,
-      });
-      const photoData = await photoRes.json();
-      if (!photoData.ok) console.warn(`Photo ${i+1} issue:`, photoData.description);
-    }
+    const result = await res.json();
+    if (!result.ok) throw new Error(result.error || 'Submission failed');
 
     showLoading(false);
     showSuccessScreen(userData);

@@ -1087,7 +1087,7 @@ function saveToSlot(idx, dataUrl) {
 // Slot label names for validation messages
 const slotNames = ['Left Palm', 'Right Palm', 'Left Side', 'Right Side'];
 
-// Track validation state per slot: null=pending, true=ok, false=rejected
+// Track validation state per slot
 const palmValid = [null, null, null, null];
 
 async function validatePalmImage(idx, dataUrl) {
@@ -1103,54 +1103,27 @@ async function validatePalmImage(idx, dataUrl) {
   indicator.textContent = '🔍';
   indicator.style.cssText = 'position:absolute;top:6px;right:6px;font-size:18px;z-index:10;animation:pulse 1s infinite;';
 
-  palmValid[idx] = null; // pending
+  palmValid[idx] = null;
+
+  // Small delay to show scanning effect
+  await new Promise(r => setTimeout(r, 600));
 
   try {
-    const base64 = dataUrl.split(',')[1];
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 100,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: 'image/jpeg', data: base64 }
-            },
-            {
-              type: 'text',
-              text: 'Does this image clearly show a human hand or palm that could be used for palm reading? Answer only: YES or NO, then one short reason.'
-            }
-          ]
-        }]
-      })
-    });
+    const result = await checkPalmImage(dataUrl);
 
-    const data = await response.json();
-    const answer = (data?.content?.[0]?.text || '').toUpperCase();
-    const isValid = answer.startsWith('YES');
+    palmValid[idx] = result.ok;
 
-    palmValid[idx] = isValid;
-
-    if (isValid) {
+    if (result.ok) {
       indicator.textContent = '✅';
       indicator.style.animation = 'none';
-      setTimeout(() => { if (indicator) indicator.remove(); }, 1500);
+      setTimeout(() => { if (indicator) indicator.remove(); }, 1200);
     } else {
-      // Mark slot as invalid
       indicator.textContent = '❌';
       indicator.style.animation = 'none';
       slot.style.border = '2px solid var(--error)';
+      showToast(`⚠️ ${slotNames[idx]}: ${result.reason}`, 'error');
 
-      // Extract reason
-      const reason = data?.content?.[0]?.text?.replace(/^(YES|NO)[,.]?\s*/i, '') || 'Not a clear palm image';
-
-      showToast(`⚠️ ${slotNames[idx]}: ${reason}\nPlease retake.`, 'error');
-
-      // Auto-remove after 2s so user can retake
+      // Auto-remove after 2.5s so user retakes
       setTimeout(() => {
         palmImages[idx] = null;
         palmValid[idx] = null;
@@ -1166,11 +1139,63 @@ async function validatePalmImage(idx, dataUrl) {
       }, 2500);
     }
   } catch (err) {
-    // If AI check fails, allow the image (don't block user)
-    palmValid[idx] = true;
+    palmValid[idx] = true; // allow on error
     if (indicator) indicator.remove();
-    console.warn('Palm validation skipped:', err.message);
   }
+}
+
+// Free local check: skin tone + brightness + not blank
+function checkPalmImage(dataUrl) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const SIZE = 80; // sample at 80x80 for speed
+      canvas.width = SIZE; canvas.height = SIZE;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, SIZE, SIZE);
+      const data = ctx.getImageData(0, 0, SIZE, SIZE).data;
+
+      let skinCount = 0, darkCount = 0, brightCount = 0, totalPixels = SIZE * SIZE;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i+1], b = data[i+2];
+        const brightness = (r + g + b) / 3;
+
+        if (brightness < 30) darkCount++;
+        if (brightness > 240) brightCount++;
+
+        // Skin tone detection: R dominant, G middle, B lowest, warm range
+        const isSkin =
+          r > 60 && g > 30 && b > 10 &&      // min values
+          r > g && r > b &&                   // R is dominant
+          (r - g) > 10 &&                     // red-green gap
+          r < 255 && g < 230 && b < 200 &&    // not too bright/washed
+          Math.abs(r - g) < 120;              // not too red (like objects)
+
+        if (isSkin) skinCount++;
+      }
+
+      const skinRatio    = skinCount / totalPixels;
+      const darkRatio    = darkCount / totalPixels;
+      const brightRatio  = brightCount / totalPixels;
+
+      // Validation rules
+      if (darkRatio > 0.7) {
+        return resolve({ ok: false, reason: 'Image too dark. Please use more light · រូបភាពងងឹតពេក' });
+      }
+      if (brightRatio > 0.7) {
+        return resolve({ ok: false, reason: 'Image too bright / overexposed · ភ្លឺពេក' });
+      }
+      if (skinRatio < 0.08) {
+        return resolve({ ok: false, reason: 'No palm detected. Please show your hand clearly · មិនឃើញដៃ' });
+      }
+
+      resolve({ ok: true });
+    };
+    img.onerror = () => resolve({ ok: true }); // allow on error
+    img.src = dataUrl;
+  });
 }
 
 function removeImage(e, idx) {

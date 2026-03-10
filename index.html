@@ -294,76 +294,6 @@
   }
   .palm-slot.has-image .remove-btn { display: flex; }
 
-  /* Tutorial Modal */
-  .tutorial-modal {
-    position: fixed; inset: 0; z-index: 200;
-    background: rgba(10,7,24,0.96);
-    display: none; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 24px 20px;
-  }
-  .tutorial-modal.open { display: flex; }
-  .tutorial-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 20px; font-weight: 600;
-    color: var(--gold-light);
-    text-align: center; margin-bottom: 4px;
-    letter-spacing: 1px;
-  }
-  .tutorial-subtitle {
-    font-size: 12px; color: var(--muted);
-    text-align: center; margin-bottom: 18px;
-    font-family: 'Noto Serif Khmer', serif;
-  }
-  .tutorial-sample {
-    width: 100%; max-width: 320px;
-    background: var(--card);
-    border: 1.5px solid var(--border);
-    border-radius: 18px;
-    overflow: hidden;
-    margin-bottom: 16px;
-    position: relative;
-  }
-  .tutorial-sample svg {
-    width: 100%; display: block;
-  }
-  .tutorial-sample-label {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    background: linear-gradient(0deg, rgba(10,7,24,0.92) 0%, transparent 100%);
-    padding: 20px 16px 12px;
-    font-family: 'Noto Serif Khmer', serif;
-    font-size: 12px; color: var(--text);
-    text-align: center;
-  }
-  .tutorial-sample-label .en {
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic; color: var(--muted);
-    font-size: 11px; display: block; margin-top: 2px;
-  }
-  .tutorial-tips {
-    width: 100%; max-width: 320px;
-    margin-bottom: 20px;
-  }
-  .tutorial-tip {
-    display: flex; align-items: center; gap: 10px;
-    padding: 7px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 12px; color: var(--text);
-    font-family: 'Noto Serif Khmer', serif;
-  }
-  .tutorial-tip:last-child { border-bottom: none; }
-  .tutorial-tip .tip-icon { font-size: 18px; flex-shrink: 0; }
-  .tutorial-ok-btn {
-    width: 100%; max-width: 320px;
-    padding: 13px;
-    background: linear-gradient(135deg, #b8942a 0%, var(--gold) 50%, #d4aa50 100%);
-    border: none; border-radius: 12px;
-    color: var(--ink);
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 17px; font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(201,168,76,0.35);
-  }
 
   /* Camera Modal */
   .camera-modal {
@@ -402,7 +332,14 @@
     position: absolute; inset: 0; pointer-events: none;
     display: flex; align-items: center; justify-content: center;
   }
-  .palm-frame-overlay svg { width: 92vw; max-width: 440px; max-height: 80vh; opacity: 0.82; }
+  .palm-frame-overlay svg {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    opacity: 0.82;
+    padding: 24px 20px 100px 20px; /* leave space for capture bar at bottom */
+  }
 
   .corner-guides {
     position: absolute;
@@ -693,30 +630,6 @@
 <div class="stars" id="stars"></div>
 
 <!-- Camera Modal -->
-<!-- Tutorial Modal — shown before camera opens -->
-<div class="tutorial-modal" id="tutorialModal">
-  <div class="tutorial-title" id="tutTitle">ដៃឆ្វេង (ខាងក្នុង)</div>
-  <div class="tutorial-subtitle" id="tutSubtitle">Left Palm — sample · គំរូ</div>
-
-  <div class="tutorial-sample">
-    <!-- Sample image changes per slot via JS -->
-    <img id="tutSampleImg" src="" alt="palm sample"
-      style="width:100%;height:220px;object-fit:cover;object-position:center;display:block;">
-    <div class="tutorial-sample-label">
-      <span id="tutLabel">ដៃត្រូវឃើញច្បាស់ · Hand must be clearly visible</span>
-      <span class="en" id="tutLabelEn">Place palm flat, fingers spread, close to camera</span>
-    </div>
-  </div>
-
-  <div class="tutorial-tips">
-    <div class="tutorial-tip"><span class="tip-icon">📏</span><span id="tipDistance">ឱ្យដៃនៅជិតកាមេរ៉ា · Hold palm close to camera</span></div>
-    <div class="tutorial-tip"><span class="tip-icon">💡</span><span>ត្រូវការពន្លឺច្បាស់ · Use good lighting</span></div>
-    <div class="tutorial-tip"><span class="tip-icon">✋</span><span>ដៃត្រូវពង្រីក មិនបត់ · Fingers flat and spread open</span></div>
-    <div class="tutorial-tip"><span class="tip-icon">🎯</span><span>ដាក់ក្នុងស៊ុម · Align inside the gold frame</span></div>
-  </div>
-
-  <button class="tutorial-ok-btn" onclick="confirmTutorial()">📷 យល់ព្រម · Open Camera</button>
-</div>
 
 <div class="camera-modal" id="cameraModal">
   <video id="cameraVideo" autoplay playsinline muted></video>
@@ -1212,67 +1125,13 @@ const palmGuides = {
   `},
 };
 
-// ─── TUTORIAL SAMPLE IMAGES ────────────────────────────────
-// ✏️ To change images: upload your photos to GitHub repo root
-// then update the src filenames below for each slot.
-const tutorialSamples = {
-  0: {
-    title: 'ដៃឆ្វេង (ខាងក្នុង)', sub: 'Left Palm · គំរូ',
-    img:   'sample_left_palm.jpg',       // ← your image filename
-    label: 'ងាកដៃឆ្វេងរបស់អ្នក ទល់មុខកាមេរ៉ា',
-    labelEn: 'Show LEFT palm facing camera, fingers spread wide',
-    tip: 'ម្រាមដៃពង្រីក · ដោយឡែកពីគ្នា · Spread all fingers wide',
-  },
-  1: {
-    title: 'ដៃស្ដាំ (ខាងក្នុង)', sub: 'Right Palm · គំរូ',
-    img:   'sample_right_palm.jpg',      // ← your image filename
-    label: 'ងាកដៃស្ដាំរបស់អ្នក ទល់មុខកាមេរ៉ា',
-    labelEn: 'Show RIGHT palm facing camera, fingers spread wide',
-    tip: 'ម្រាមដៃពង្រីក · ដោយឡែកពីគ្នា · Spread all fingers wide',
-  },
-  2: {
-    title: 'ដៃឆ្វេង (ខាងក្រៅ)', sub: 'Left Side View · គំរូ',
-    img:   'sample_left_side.jpg',       // ← your image filename
-    label: 'បង្វែរដៃឆ្វេង ថតពីខាងក្រៅ (ខាងមេដៃ)',
-    labelEn: 'Turn LEFT hand sideways — thumb side toward camera',
-    tip: 'ដៃត្រង់ · ម្រាមដៃឡើងលើ · Hand vertical, fingers pointing up',
-  },
-  3: {
-    title: 'ដៃស្ដាំ (ខាងក្រៅ)', sub: 'Right Side View · គំរូ',
-    img:   'sample_right_side.jpg',      // ← your image filename
-    label: 'បង្វែរដៃស្ដាំ ថតពីខាងក្រៅ (ខាងមេដៃ)',
-    labelEn: 'Turn RIGHT hand sideways — thumb side toward camera',
-    tip: 'ដៃត្រង់ · ម្រាមដៃឡើងលើ · Hand vertical, fingers pointing up',
-  },
-};
-
-let pendingSlot = 0;
 
 function openCamera(slotIndex) {
-  pendingSlot = slotIndex;
-  const s = tutorialSamples[slotIndex];
-
-  // Populate tutorial
-  document.getElementById('tutTitle').textContent    = s.title;
-  document.getElementById('tutSubtitle').textContent = s.sub;
-  document.getElementById('tutLabel').textContent    = s.label;
-  document.getElementById('tutLabelEn').textContent  = s.labelEn;
-  document.getElementById('tipDistance').textContent = s.tip;
-  document.getElementById('tutSampleImg').src        = s.img;
-
-  // Show tutorial first
-  document.getElementById('tutorialModal').classList.add('open');
-}
-
-function confirmTutorial() {
-  document.getElementById('tutorialModal').classList.remove('open');
-
-  const slotIndex = pendingSlot;
   currentSlot = slotIndex;
   const meta = slotMeta[slotIndex];
-  document.getElementById('camSlotLabel').textContent    = meta.km;
-  document.getElementById('camSlotLabelEn').textContent  = meta.en;
-  document.getElementById('camInstruction').textContent  = meta.instr;
+  document.getElementById('camSlotLabel').textContent   = meta.km;
+  document.getElementById('camSlotLabelEn').textContent = meta.en;
+  document.getElementById('camInstruction').textContent = meta.instr;
 
   const guide = palmGuides[slotIndex];
   const svg = document.getElementById('palmGuideSvg');
@@ -1283,6 +1142,7 @@ function confirmTutorial() {
   document.getElementById('cameraModal').classList.add('open');
   startCamera();
 }
+
 
 async function startCamera() {
   try {

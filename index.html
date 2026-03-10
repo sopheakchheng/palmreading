@@ -699,8 +699,9 @@
   <div class="tutorial-subtitle" id="tutSubtitle">Left Palm — sample · គំរូ</div>
 
   <div class="tutorial-sample">
-    <!-- Sample illustration changes per slot via JS -->
-    <svg id="tutSampleSvg" viewBox="0 0 320 380" xmlns="http://www.w3.org/2000/svg"></svg>
+    <!-- Sample image changes per slot via JS -->
+    <img id="tutSampleImg" src="" alt="palm sample"
+      style="width:100%;height:220px;object-fit:cover;object-position:center;display:block;">
     <div class="tutorial-sample-label">
       <span id="tutLabel">ដៃត្រូវឃើញច្បាស់ · Hand must be clearly visible</span>
       <span class="en" id="tutLabelEn">Place palm flat, fingers spread, close to camera</span>
@@ -800,8 +801,8 @@
     <div class="field-row">
       <div class="field-group" id="fg-dob">
         <label class="field-label">Date of Birth <span class="khmer">· ថ្ងៃខែឆ្នាំកំណើត</span></label>
-        <input type="date" id="dob">
-        <div class="field-error">Required</div>
+        <input type="date" id="dob" onchange="updateDobLimits()">
+        <div class="field-error" id="dob-error">Required</div>
       </div>
     </div>
 
@@ -1092,6 +1093,33 @@ function validateStep0() {
       fg_el.classList.remove('has-error');
     }
   });
+
+  // Age validation: must be 7 to 99 years old
+  const dobVal = document.getElementById('dob').value;
+  if (dobVal) {
+    const dob     = new Date(dobVal);
+    const today   = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+
+    const dobFg    = document.getElementById('fg-dob');
+    const dobError = document.getElementById('dob-error');
+
+    if (age < 7) {
+      dobFg.classList.add('has-error');
+      dobError.textContent = 'អាយុត្រូវតែ ៧ ឆ្នាំ ឬច្រើនជាង · Must be at least 7 years old';
+      ok = false;
+    } else if (age >= 99) {
+      dobFg.classList.add('has-error');
+      dobError.textContent = 'អាយុត្រូវតែ តិចជាង ៩៩ ឆ្នាំ · Must be under 99 years old';
+      ok = false;
+    } else {
+      dobFg.classList.remove('has-error');
+      dobError.textContent = 'Required';
+    }
+  }
+
   if (!selectedGender) {
     showToast('⚠ ជ្រើសភេទ · Please select gender', 'error');
     ok = false;
@@ -1184,132 +1212,38 @@ const palmGuides = {
   `},
 };
 
-// ─── TUTORIAL SAMPLE SVGs (based on real hand photos) ────────
+// ─── TUTORIAL SAMPLE IMAGES ────────────────────────────────
+// ✏️ To change images: upload your photos to GitHub repo root
+// then update the src filenames below for each slot.
 const tutorialSamples = {
-  // Left Palm front: thumb LEFT, fingers up, palm open facing camera
   0: {
-    title: 'ដៃឆ្វេង (ខាងក្នុង)', sub: 'Left Palm — គំរូ',
+    title: 'ដៃឆ្វេង (ខាងក្នុង)', sub: 'Left Palm · គំរូ',
+    img:   'sample_left_palm.jpg',       // ← your image filename
     label: 'ងាកដៃឆ្វេងរបស់អ្នក ទល់មុខកាមេរ៉ា',
-    labelEn: 'Show your LEFT palm flat facing the camera',
-    tip: 'ម្រាមដៃពង្រីក · ដោយឡែកពីគ្នា · Spread fingers wide apart',
-    svg: `
-      <rect width="320" height="380" fill="#0d0a1a"/>
-      <!-- wrist/arm -->
-      <path d="M 95 380 L 95 280 C 95 260 105 252 130 250 C 155 248 165 255 175 270 L 175 380 Z" fill="#c4956a" opacity="0.9"/>
-      <!-- palm -->
-      <path d="M 95 275 C 90 240 88 210 90 185 C 92 165 100 158 115 158 C 120 157 124 160 126 165
-               L 126 140 C 126 122 140 118 150 120 C 160 122 164 130 164 142 L 164 160
-               L 164 138 C 164 120 178 116 188 118 C 198 120 202 130 202 142 L 202 162
-               C 202 150 208 142 218 140 C 230 138 238 148 238 160 L 238 200
-               C 244 192 254 190 262 194 C 272 200 274 212 270 222 L 258 258
-               C 250 275 238 280 225 278 L 175 270 C 165 255 155 248 130 250 C 118 252 105 258 95 275 Z"
-            fill="#d4a57a" opacity="0.95"/>
-      <!-- thumb — LEFT side, large -->
-      <path d="M 95 275 C 90 255 82 240 68 232 C 52 223 36 228 30 244 C 24 260 32 278 48 284 C 64 290 82 282 90 268 Z"
-            fill="#c4956a" opacity="0.92"/>
-      <!-- fingers outlines -->
-      <path d="M 115 158 C 112 130 110 105 110 80 C 110 62 122 54 132 56 C 142 58 147 68 147 82 L 147 142"
-            fill="#d4a57a" opacity="0.9"/>
-      <path d="M 126 140 C 126 110 128 85 128 62 C 128 44 140 36 150 38 C 160 40 166 52 166 66 L 166 138"
-            fill="#c9956a" opacity="0.88"/>
-      <path d="M 164 138 C 165 110 166 86 166 66 C 166 48 178 40 188 42 C 198 44 204 55 204 70 L 204 142"
-            fill="#d4a57a" opacity="0.9"/>
-      <path d="M 202 142 C 202 115 204 94 205 76 C 206 60 216 52 226 54 C 236 56 242 66 242 80 L 242 160"
-            fill="#c4956a" opacity="0.88"/>
-      <!-- palm lines -->
-      <path d="M 108 200 C 140 190 190 192 228 205" stroke="#a07040" stroke-width="2" fill="none" opacity="0.6"/>
-      <path d="M 105 225 C 135 215 190 218 225 230" stroke="#a07040" stroke-width="1.5" fill="none" opacity="0.45"/>
-      <path d="M 130 165 C 148 200 160 235 158 265" stroke="#a07040" stroke-width="1.5" fill="none" opacity="0.4"/>
-      <!-- gold frame guide -->
-      <rect x="70" y="35" width="200" height="310" rx="12" fill="none" stroke="#c9a84c" stroke-width="2.5" stroke-dasharray="8,5" opacity="0.7"/>
-      <!-- arrows pointing in -->
-      <text x="160" y="28" text-anchor="middle" fill="#c9a84c" font-size="13" opacity="0.9">▼ ស្ថានទីនេះ · Place here ▼</text>
-    `
+    labelEn: 'Show LEFT palm facing camera, fingers spread wide',
+    tip: 'ម្រាមដៃពង្រីក · ដោយឡែកពីគ្នា · Spread all fingers wide',
   },
-  // Right Palm: thumb RIGHT, mirror
   1: {
-    title: 'ដៃស្ដាំ (ខាងក្នុង)', sub: 'Right Palm — គំរូ',
+    title: 'ដៃស្ដាំ (ខាងក្នុង)', sub: 'Right Palm · គំរូ',
+    img:   'sample_right_palm.jpg',      // ← your image filename
     label: 'ងាកដៃស្ដាំរបស់អ្នក ទល់មុខកាមេរ៉ា',
-    labelEn: 'Show your RIGHT palm flat facing the camera',
-    tip: 'ម្រាមដៃពង្រីក · ដោយឡែកពីគ្នា · Spread fingers wide apart',
-    svg: `
-      <rect width="320" height="380" fill="#0d0a1a"/>
-      <path d="M 145 380 L 145 280 C 145 260 155 252 175 250 C 200 248 212 255 220 270 L 220 380 Z" fill="#c4956a" opacity="0.9"/>
-      <path d="M 225 275 C 230 240 232 210 230 185 C 228 165 220 158 205 158 C 200 157 196 160 194 165
-               L 194 140 C 194 122 180 118 170 120 C 160 122 156 130 156 142 L 156 160
-               L 156 138 C 156 120 142 116 132 118 C 122 120 118 130 118 142 L 118 162
-               C 118 150 112 142 102 140 C 90 138 82 148 82 160 L 82 200
-               C 76 192 66 190 58 194 C 48 200 46 212 50 222 L 62 258
-               C 70 275 82 280 95 278 L 145 270 C 155 255 165 248 188 250 C 200 252 212 258 220 275 Z"
-            fill="#d4a57a" opacity="0.95"/>
-      <!-- thumb RIGHT -->
-      <path d="M 225 275 C 230 255 238 240 252 232 C 268 223 284 228 290 244 C 296 260 288 278 272 284 C 256 290 238 282 230 268 Z"
-            fill="#c4956a" opacity="0.92"/>
-      <path d="M 205 158 C 208 130 210 105 210 80 C 210 62 198 54 188 56 C 178 58 173 68 173 82 L 173 142" fill="#d4a57a" opacity="0.9"/>
-      <path d="M 194 140 C 194 110 192 85 192 62 C 192 44 180 36 170 38 C 160 40 154 52 154 66 L 154 138" fill="#c9956a" opacity="0.88"/>
-      <path d="M 156 138 C 155 110 154 86 154 66 C 154 48 142 40 132 42 C 122 44 116 55 116 70 L 116 142" fill="#d4a57a" opacity="0.9"/>
-      <path d="M 118 142 C 118 115 116 94 115 76 C 114 60 104 52 94 54 C 84 56 78 66 78 80 L 78 160" fill="#c4956a" opacity="0.88"/>
-      <path d="M 212 200 C 180 190 130 192 92 205" stroke="#a07040" stroke-width="2" fill="none" opacity="0.6"/>
-      <path d="M 215 225 C 185 215 130 218 95 230" stroke="#a07040" stroke-width="1.5" fill="none" opacity="0.45"/>
-      <rect x="50" y="35" width="200" height="310" rx="12" fill="none" stroke="#c9a84c" stroke-width="2.5" stroke-dasharray="8,5" opacity="0.7"/>
-      <text x="160" y="28" text-anchor="middle" fill="#c9a84c" font-size="13" opacity="0.9">▼ ស្ថានទីនេះ · Place here ▼</text>
-    `
+    labelEn: 'Show RIGHT palm facing camera, fingers spread wide',
+    tip: 'ម្រាមដៃពង្រីក · ដោយឡែកពីគ្នា · Spread all fingers wide',
   },
-  // Left Side view: hand vertical, thumb LEFT, fingers pointing up-right
   2: {
-    title: 'ដៃឆ្វេង (ខាងក្រៅ)', sub: 'Left Side View — គំរូ',
-    label: 'បង្វែរដៃឆ្វេង ថតពីខាងក្រៅ (ខាងត្រង់)',
+    title: 'ដៃឆ្វេង (ខាងក្រៅ)', sub: 'Left Side View · គំរូ',
+    img:   'sample_left_side.jpg',       // ← your image filename
+    label: 'បង្វែរដៃឆ្វេង ថតពីខាងក្រៅ (ខាងមេដៃ)',
     labelEn: 'Turn LEFT hand sideways — thumb side toward camera',
     tip: 'ដៃត្រង់ · ម្រាមដៃឡើងលើ · Hand vertical, fingers pointing up',
-    svg: `
-      <rect width="320" height="380" fill="#0d0a1a"/>
-      <!-- arm/wrist coming from bottom -->
-      <path d="M 130 380 L 130 295 C 130 275 140 268 158 268 L 180 268 L 180 380 Z" fill="#c4956a" opacity="0.88"/>
-      <!-- main hand body — side profile, narrow -->
-      <path d="M 130 295 C 128 265 126 235 125 205
-               C 124 180 126 160 130 140 C 134 120 142 108 152 102
-               C 162 96 172 100 178 112 C 184 124 182 145 180 168
-               L 180 268 C 168 268 148 270 130 295 Z"
-            fill="#d4a57a" opacity="0.95"/>
-      <!-- fingers stack visible at top-right -->
-      <path d="M 152 102 C 155 80 158 58 160 38 C 161 28 168 22 175 24 C 182 26 184 36 183 48 L 180 110"
-            fill="#c4956a" opacity="0.85"/>
-      <!-- thumb — LEFT protruding -->
-      <path d="M 130 200 C 110 195 88 198 72 210 C 56 222 54 240 68 250 C 80 258 100 255 115 244 C 128 234 132 218 130 204 Z"
-            fill="#c4956a" opacity="0.92"/>
-      <!-- knuckle lines -->
-      <line x1="155" y1="135" x2="180" y2="130" stroke="#a07040" stroke-width="1.5" opacity="0.5"/>
-      <line x1="152" y1="168" x2="180" y2="164" stroke="#a07040" stroke-width="1.5" opacity="0.4"/>
-      <!-- frame -->
-      <rect x="55" y="20" width="185" height="335" rx="12" fill="none" stroke="#c9a84c" stroke-width="2.5" stroke-dasharray="8,5" opacity="0.7"/>
-      <text x="160" y="14" text-anchor="middle" fill="#c9a84c" font-size="13" opacity="0.9">▼ ស្ថានទីនេះ · Place here ▼</text>
-    `
   },
-  // Right Side: mirror — thumb RIGHT
   3: {
-    title: 'ដៃស្ដាំ (ខាងក្រៅ)', sub: 'Right Side View — គំរូ',
-    label: 'បង្វែរដៃស្ដាំ ថតពីខាងក្រៅ (ខាងត្រង់)',
+    title: 'ដៃស្ដាំ (ខាងក្រៅ)', sub: 'Right Side View · គំរូ',
+    img:   'sample_right_side.jpg',      // ← your image filename
+    label: 'បង្វែរដៃស្ដាំ ថតពីខាងក្រៅ (ខាងមេដៃ)',
     labelEn: 'Turn RIGHT hand sideways — thumb side toward camera',
     tip: 'ដៃត្រង់ · ម្រាមដៃឡើងលើ · Hand vertical, fingers pointing up',
-    svg: `
-      <rect width="320" height="380" fill="#0d0a1a"/>
-      <path d="M 140 380 L 140 295 C 140 275 152 268 172 268 L 195 268 L 195 380 Z" fill="#c4956a" opacity="0.88"/>
-      <path d="M 195 295 C 197 265 198 235 198 205
-               C 199 180 197 160 193 140 C 189 120 181 108 171 102
-               C 161 96 151 100 145 112 C 139 124 140 145 142 168
-               L 140 268 C 155 268 175 270 195 295 Z"
-            fill="#d4a57a" opacity="0.95"/>
-      <path d="M 171 102 C 168 80 165 58 163 38 C 162 28 155 22 148 24 C 141 26 139 36 140 48 L 142 110"
-            fill="#c4956a" opacity="0.85"/>
-      <!-- thumb RIGHT -->
-      <path d="M 195 200 C 215 195 237 198 253 210 C 269 222 271 240 257 250 C 245 258 225 255 210 244 C 197 234 193 218 195 204 Z"
-            fill="#c4956a" opacity="0.92"/>
-      <line x1="165" y1="135" x2="142" y2="130" stroke="#a07040" stroke-width="1.5" opacity="0.5"/>
-      <line x1="168" y1="168" x2="142" y2="164" stroke="#a07040" stroke-width="1.5" opacity="0.4"/>
-      <rect x="80" y="20" width="185" height="335" rx="12" fill="none" stroke="#c9a84c" stroke-width="2.5" stroke-dasharray="8,5" opacity="0.7"/>
-      <text x="160" y="14" text-anchor="middle" fill="#c9a84c" font-size="13" opacity="0.9">▼ ស្ថានទីនេះ · Place here ▼</text>
-    `
-  }
+  },
 };
 
 let pendingSlot = 0;
@@ -1324,7 +1258,7 @@ function openCamera(slotIndex) {
   document.getElementById('tutLabel').textContent    = s.label;
   document.getElementById('tutLabelEn').textContent  = s.labelEn;
   document.getElementById('tipDistance').textContent = s.tip;
-  document.getElementById('tutSampleSvg').innerHTML  = s.svg;
+  document.getElementById('tutSampleImg').src        = s.img;
 
   // Show tutorial first
   document.getElementById('tutorialModal').classList.add('open');
@@ -1718,6 +1652,17 @@ function getBirthPlace() {
   }
   return city ? `${city}, ${countryVal}` : countryVal;
 }
+
+// Set DOB min/max based on age rule (7–99 years)
+function updateDobLimits() {
+  const input = document.getElementById('dob');
+  const today = new Date();
+  const maxDate = new Date(today.getFullYear() - 7,  today.getMonth(), today.getDate());
+  const minDate = new Date(today.getFullYear() - 99, today.getMonth(), today.getDate());
+  input.max = maxDate.toISOString().split('T')[0];
+  input.min = minDate.toISOString().split('T')[0];
+}
+updateDobLimits(); // run on load
 
 // Auto-fill Khmer year from DOB
 document.getElementById('dob').addEventListener('change', function() {

@@ -264,14 +264,21 @@
   .palm-placeholder .guide-icon { font-size: 32px; opacity: 0.5; }
   .palm-placeholder .add-text { font-size: 11px; color: var(--muted); }
 
-  /* Palm overlay guide using SVG */
+  /* Palm slot background image guide */
   .palm-guide-overlay {
     position: absolute;
     inset: 0;
-    display: flex; align-items: center; justify-content: center;
     pointer-events: none;
-    padding: 10% 15% 20%;
+    overflow: hidden;
   }
+  .palm-guide-overlay img.slot-bg {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center;
+    opacity: 0.38;
+    display: block;
+  }
+  /* fallback SVG if no image */
   .palm-guide-overlay svg { width: 100%; height: 100%; opacity: 0.22; }
 
   .palm-slot img.preview {
@@ -293,6 +300,7 @@
     display: none;
   }
   .palm-slot.has-image .remove-btn { display: flex; }
+
 
 
   /* Camera Modal */
@@ -329,16 +337,15 @@
   }
 
   .palm-frame-overlay {
-    position: absolute; inset: 0; pointer-events: none;
-    display: flex; align-items: center; justify-content: center;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
   }
   .palm-frame-overlay svg {
     width: 100%;
     height: 100%;
-    max-width: none;
-    max-height: none;
-    opacity: 0.82;
-    padding: 24px 20px 100px 20px; /* leave space for capture bar at bottom */
+    preserveAspectRatio: xMidYMid slice;
+    opacity: 0.85;
   }
 
   .corner-guides {
@@ -631,6 +638,7 @@
 
 <!-- Camera Modal -->
 
+
 <div class="camera-modal" id="cameraModal">
   <video id="cameraVideo" autoplay playsinline muted></video>
   <canvas id="captureCanvas"></canvas>
@@ -647,7 +655,7 @@
   <!-- Palm alignment overlay — SVG swapped per slot -->
   <div class="palm-frame-overlay">
     <!-- slot 0: Left Palm (front) — thumb on RIGHT side -->
-    <svg id="palmGuideSvg" viewBox="0 0 200 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg id="palmGuideSvg" viewBox="0 0 200 300" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M95 290 C60 290 35 265 30 235 L18 145 C16 133 22 122 34 120 C40 119 46 121 50 126 L50 80 C50 68 59 58 71 58 C83 58 92 68 92 80 L92 60 C92 48 101 38 113 38 C125 38 134 48 134 60 L134 68 C136 58 145 50 156 50 C168 50 177 59 177 71 L177 145 C180 140 186 137 193 138 C200 139 205 146 204 153 L196 220 C193 258 162 290 125 290 Z" stroke="#c9a84c" stroke-width="3" fill="rgba(201,168,76,0.07)"/>
       <line x1="71" y1="58" x2="71" y2="20" stroke="#c9a84c" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/>
       <line x1="113" y1="38" x2="113" y2="5" stroke="#c9a84c" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/>
@@ -835,8 +843,14 @@
     <div class="section-desc">Upload 4 photos of your palm. Tap each to capture or upload. · ថតរូបដៃ ៤ ទិស</div>
 
     <div class="palm-grid">
+      <!-- ✏️ To use your own photos: upload files to GitHub repo root
+           and update the src= filenames below for each slot -->
+
       <div class="palm-slot" id="slot-0" onclick="openCamera(0)">
-        <div class="palm-guide-overlay"><?xml version="1.0"?><svg viewBox="0 0 100 140" fill="none"><path d="M47 132 C30 132 18 120 16 106 L10 65 C9 59 12 54 18 53 C21 52.5 24 54 25.5 57 L25.5 35 C25.5 30 29.5 26 34.5 26 C39.5 26 43.5 30 43.5 35 L43.5 26 C43.5 21 47.5 17 52.5 17 C57.5 17 61.5 21 61.5 26 L61.5 30 C62.5 25 66.5 21.5 71.5 21.5 C76.5 21.5 80.5 25.5 80.5 30.5 L80.5 65 C82 62 85 60.5 88 61 C91 61.5 93 64.5 92.5 67.5 L89 100 C87.5 118 75 132 59 132 Z" stroke="#c9a84c" stroke-width="3" fill="rgba(201,168,76,0.05)"/></svg></div>
+        <div class="palm-guide-overlay">
+          <img class="slot-bg" src="sample_left_palm.jpg"
+               onerror="this.style.display='none'" alt="">
+        </div>
         <div class="palm-placeholder">
           <div class="guide-icon">🖐️</div>
           <div class="add-text">+ ថត/ជ្រើស</div>
@@ -846,7 +860,10 @@
       </div>
 
       <div class="palm-slot" id="slot-1" onclick="openCamera(1)">
-        <div class="palm-guide-overlay"><?xml version="1.0"?><svg viewBox="0 0 100 140" fill="none"><path d="M53 132 C70 132 82 120 84 106 L90 65 C91 59 88 54 82 53 C79 52.5 76 54 74.5 57 L74.5 35 C74.5 30 70.5 26 65.5 26 C60.5 26 56.5 30 56.5 35 L56.5 26 C56.5 21 52.5 17 47.5 17 C42.5 17 38.5 21 38.5 26 L38.5 30 C37.5 25 33.5 21.5 28.5 21.5 C23.5 21.5 19.5 25.5 19.5 30.5 L19.5 65 C18 62 15 60.5 12 61 C9 61.5 7 64.5 7.5 67.5 L11 100 C12.5 118 25 132 41 132 Z" stroke="#c9a84c" stroke-width="3" fill="rgba(201,168,76,0.05)"/></svg></div>
+        <div class="palm-guide-overlay">
+          <img class="slot-bg" src="sample_right_palm.jpg"
+               onerror="this.style.display='none'" alt="">
+        </div>
         <div class="palm-placeholder">
           <div class="guide-icon">🤚</div>
           <div class="add-text">+ ថត/ជ្រើស</div>
@@ -856,7 +873,10 @@
       </div>
 
       <div class="palm-slot" id="slot-2" onclick="openCamera(2)">
-        <div class="palm-guide-overlay"><svg viewBox="0 0 100 180" fill="none"><path d="M30 170 C18 160 14 140 14 120 L14 50 C14 40 20 32 28 32 C36 32 42 40 42 50 L42 20 C42 10 50 4 58 4 C66 4 72 10 72 20 L72 170 Z" stroke="#c9a84c" stroke-width="3" fill="rgba(201,168,76,0.05)"/><line x1="14" y1="90" x2="72" y2="90" stroke="#c9a84c" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/></svg></div>
+        <div class="palm-guide-overlay">
+          <img class="slot-bg" src="sample_left_side.jpg"
+               onerror="this.style.display='none'" alt="">
+        </div>
         <div class="palm-placeholder">
           <div class="guide-icon">✋</div>
           <div class="add-text">+ ថត/ជ្រើស</div>
@@ -866,7 +886,10 @@
       </div>
 
       <div class="palm-slot" id="slot-3" onclick="openCamera(3)">
-        <div class="palm-guide-overlay"><svg viewBox="0 0 100 180" fill="none"><path d="M70 170 C82 160 86 140 86 120 L86 50 C86 40 80 32 72 32 C64 32 58 40 58 50 L58 20 C58 10 50 4 42 4 C34 4 28 10 28 20 L28 170 Z" stroke="#c9a84c" stroke-width="3" fill="rgba(201,168,76,0.05)"/><line x1="28" y1="90" x2="86" y2="90" stroke="#c9a84c" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/></svg></div>
+        <div class="palm-guide-overlay">
+          <img class="slot-bg" src="sample_right_side.jpg"
+               onerror="this.style.display='none'" alt="">
+        </div>
         <div class="palm-placeholder">
           <div class="guide-icon">🤚</div>
           <div class="add-text">+ ថត/ជ្រើស</div>
@@ -1126,22 +1149,23 @@ const palmGuides = {
 };
 
 
+
 function openCamera(slotIndex) {
   currentSlot = slotIndex;
   const meta = slotMeta[slotIndex];
   document.getElementById('camSlotLabel').textContent   = meta.km;
   document.getElementById('camSlotLabelEn').textContent = meta.en;
   document.getElementById('camInstruction').textContent = meta.instr;
-
   const guide = palmGuides[slotIndex];
   const svg = document.getElementById('palmGuideSvg');
   svg.setAttribute('viewBox', guide.vb);
+  svg.setAttribute('preserveAspectRatio', 'none');
   svg.innerHTML = guide.paths;
   svg.style.transform = guide.mirror ? 'scaleX(-1)' : 'scaleX(1)';
-
   document.getElementById('cameraModal').classList.add('open');
   startCamera();
 }
+
 
 
 async function startCamera() {
